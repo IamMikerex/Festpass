@@ -21,6 +21,7 @@ const config = {
   jwtExpiresIn: process.env.JWT_EXPIRES_IN || '8h',
   webhookSecret: process.env.PAYMENT_WEBHOOK_SECRET || 'dev-webhook-secret',
   corsOrigin: (process.env.CORS_ORIGIN || 'http://localhost:5173').split(',').map((s) => s.trim()),
+  analyticsUrl: process.env.ANALYTICS_URL || 'http://127.0.0.1:8000',
   currency: 'TRY',
   jobsIntervalMs: Number(process.env.JOBS_INTERVAL_MS || 30000),
 };

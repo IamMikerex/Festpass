@@ -1,0 +1,19 @@
+# Optional: a local MySQL 8.0 for FestPass. `docker compose up -d`, then `cd server && npm run db:init`.
+services:
+  mysql:
+    image: mysql:8.0
+    container_name: festpass-mysql
+    environment:
+      MYSQL_ROOT_PASSWORD: root
+      MYSQL_USER: festpass
+      MYSQL_PASSWORD: festpass
+      MYSQL_DATABASE: festpass
+      TZ: Europe/Istanbul
+    command: ["--default-time-zone=+03:00", "--log-bin-trust-function-creators=1"]
+    ports:
+      - "3306:3306"
+    volumes:
+      - festpass-mysql:/var/lib/mysql
+      - ./database/grant.sql:/docker-entrypoint-initdb.d/00-grant.sql:ro
+volumes:
+  festpass-mysql:

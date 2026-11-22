@@ -4,6 +4,7 @@ const cors = require('cors');
 const morgan = require('morgan');
 const path = require('path');
 const fs = require('fs');
+const http = require('http');
 const config = require('./config');
 const db = require('./db');
 const { fromDbError } = require('./utils/errors');
@@ -31,6 +32,17 @@ app.use('/api/payments', require('./routes/payments').router);
 app.use('/api/admin', require('./routes/admin').router);
 
 app.use('/api', (_req, res) => res.status(404).json({ error: 'Endpoint not found' }));
+
+// Single-origin production setup: forward /analytics/* to the FastAPI service.
+app.use('/analytics', (req, res) => {
+  const target = new URL(req.originalUrl, config.analyticsUrl);
+  const upstream = http.request(target, { method: req.method, headers: { ...req.headers, host: target.host } }, (r) => {
+    res.writeHead(r.statusCode, r.headers);
+    r.pipe(res);
+  });
+  upstream.on('error', () => res.status(502).json({ error: 'Analytics service is not reachable' }));
+  req.pipe(upstream);
+});
 
 // In production the built React app is served from the same origin.
 const clientDist = path.join(__dirname, '..', '..', 'client', 'dist');

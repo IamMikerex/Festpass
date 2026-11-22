@@ -44,6 +44,7 @@ const LIST_SELECT = `
          (SELECT MIN(price) FROM TicketTiers t WHERE t.festival_id = f.festival_id) AS min_price,
          (SELECT COALESCE(SUM(remaining), 0) FROM v_tier_availability a WHERE a.festival_id = f.festival_id) AS tickets_remaining,
          (SELECT COALESCE(SUM(quota), 0) FROM TicketTiers t WHERE t.festival_id = f.festival_id) AS total_quota,
+         (SELECT COUNT(*) FROM Stalls s WHERE s.festival_id = f.festival_id) AS stall_count,
          DATEDIFF(f.start_date, CURDATE()) AS days_until
     FROM Festivals f JOIN Users u ON u.user_id = f.organizer_id`;
 
