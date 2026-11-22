@@ -1,8 +1,46 @@
+# Dependencies and builds
 node_modules/
-.env
 dist/
-*.log
-.DS_Store
+build/
+*.tsbuildinfo
+
+# Python
 __pycache__/
+*.py[cod]
 .venv/
-*.pyc
+venv/
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.coverage
+htmlcov/
+
+# Secrets and local config
+.env
+.env.*
+!.env.example
+
+# Logs
+*.log
+npm-debug.log*
+
+# Editors and OS
+.vscode/
+.idea/
+*.swp
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# AI assistant and tooling files
+.claude/
+CLAUDE.md
+CLAUDE.local.md
+.claude-mem/
+.cursor/
+.cursorrules
+.aider*
+.continue/
+.copilot/
+.codex/
+AGENTS.md

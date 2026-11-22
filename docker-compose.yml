@@ -1,4 +1,4 @@
-# Optional: a local MySQL 8.0 for FestPass. `docker compose up -d`, then `cd server && npm run db:init`.
+# Optional local MySQL 8.0 for FestPass: `docker compose up -d`, then `npm run db:init`.
 services:
   mysql:
     image: mysql:8.0

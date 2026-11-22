@@ -38,7 +38,7 @@ async function request(base, method, path, body) {
   return data;
 }
 
-/** Express core API */
+/** Core API (FastAPI, /api) */
 export const api = {
   get: (p) => request('/api', 'GET', p),
   post: (p, b = {}) => request('/api', 'POST', p, b),
@@ -47,7 +47,7 @@ export const api = {
   del: (p) => request('/api', 'DELETE', p),
 };
 
-/** FastAPI analytics service */
+/** Analytics (FastAPI, /analytics) */
 export const analytics = {
   get: (p) => request('/analytics', 'GET', p),
   async download(path, filename) {

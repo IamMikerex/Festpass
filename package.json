@@ -1,15 +1,14 @@
 {
   "name": "festpass",
   "private": true,
-  "description": "FestPass: music festival ticketing & vendor management (React + Express + FastAPI + MySQL)",
+  "description": "FestPass: music festival ticketing & vendor management (React + FastAPI + MySQL)",
   "scripts": {
-    "install:all": "npm --prefix server install && npm --prefix client install && python3 -m venv reports/.venv && reports/.venv/bin/pip install -r reports/requirements.txt",
-    "db:init": "npm --prefix server run db:init",
-    "dev:api": "npm --prefix server run dev",
-    "dev:analytics": "cd reports && .venv/bin/uvicorn app.main:app --reload --port 8000",
+    "install:all": "npm --prefix client install && python -m pip install -r api/requirements.txt",
+    "db:init": "cd api && python -m scripts.init_db",
+    "dev:api": "cd api && python -m uvicorn app.main:app --reload --port 8000",
     "dev:client": "npm --prefix client run dev",
     "build": "npm --prefix client run build",
-    "start": "npm --prefix server start",
-    "test": "npm --prefix server test && cd reports && .venv/bin/pytest -q"
+    "start": "cd api && python -m uvicorn app.main:app --host 0.0.0.0 --port 8000",
+    "test": "cd api && python -m pytest -q"
   }
 }

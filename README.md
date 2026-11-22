@@ -5,24 +5,22 @@
 | Layer | Technology | Folder |
 |---|---|---|
 | Presentation | React 18 + Vite, React Router, Recharts, `qrcode.react`, `html5-qrcode` | [`client/`](client) |
-| Core API | Node.js + Express, JWT role‑based auth, bcrypt, zod validation, scheduled jobs | [`server/`](server) |
-| Analytics API | Python FastAPI (read‑only): dashboards, reports, ledgers, audit trails, CSV exports | [`reports/`](reports) |
+| API | Python FastAPI: Pydantic validation, JWT role‑based auth, bcrypt, scheduled jobs, analytics and CSV exports | [`api/`](api) |
 | Data | MySQL 8.0, InnoDB, utf8mb4: 11 tables, CHECK/UNIQUE/FK constraints, 12 triggers, 6 views | [`database/`](database) |
 
 ```
-Browser (React) ──/api────────► Express  ──┐
-                └─/analytics──► FastAPI  ──┴──► MySQL 8 (single source of truth)
+Browser (React) ──/api, /analytics──► FastAPI ──► MySQL 8 (single source of truth)
 ```
 
-Both services share the same database and the same JWT secret: Express issues the token at sign‑in, FastAPI verifies it.
+One FastAPI app serves the core API (`/api`), the read‑only analytics (`/analytics`) and, in production, the built React app.
 
 ---
 
 ## Quick start
 
 ### 1. Requirements
-- Node.js 18+ and npm
 - Python 3.10+
+- Node.js 18+ and npm (React client only)
 - MySQL 8.0 (local install, or `docker compose up -d` with the included [`docker-compose.yml`](docker-compose.yml))
 
 ### 2. Database user
@@ -42,27 +40,27 @@ SET GLOBAL log_bin_trust_function_creators = 1;
 
 ```bash
 git clone https://github.com/IamMikerex/festpass.git && cd festpass
-npm run install:all                      # server + client npm deps, reports/.venv with pip deps
+python -m venv api/.venv
+source api/.venv/bin/activate            # Windows: api\.venv\Scripts\activate
+npm run install:all                      # client npm deps + api pip deps
 
-cp server/.env.example server/.env       # set DB_* and a long random JWT_SECRET
-cp reports/.env.example reports/.env     # same DB_* and the SAME JWT_SECRET
-
-npm run db:init                          # drops + creates `festpass`, loads schema.sql and seed.sql
+cp api/.env.example api/.env             # set DB_* and a long random JWT_SECRET
+npm run db:init                          # drops + recreates `festpass` from database/festpass.sql
 ```
 
-You can also load the SQL directly: `mysql -u root -p < database/schema.sql && mysql -u root -p festpass < database/seed.sql`.
+`database/festpass.sql` is self-contained: tables, triggers, views and demo data. You can import it directly instead:
+`mysql -u root -p < database/festpass.sql` (or MySQL Workbench → *File → Run SQL Script*).
 
-### 4. Run (three terminals)
+### 4. Run (two terminals)
 
 ```bash
-npm run dev:api          # Express      http://localhost:4000/api
-npm run dev:analytics    # FastAPI      http://localhost:8000/analytics  (docs: /analytics/docs)
+npm run dev:api          # FastAPI      http://localhost:8000/api   (interactive docs: /api/docs)
 npm run dev:client       # React (Vite) http://localhost:5173
 ```
 
-Open **http://localhost:5173**. Vite proxies `/api` and `/analytics` to the two services.
+Open **http://localhost:5173**. Vite proxies `/api` and `/analytics` to FastAPI.
 
-**Production-style single port:** `npm run build` then `npm start` serves the built React app from Express on port 4000 and forwards `/analytics/*` to FastAPI (`ANALYTICS_URL`).
+**Production-style single port:** `npm run build` then `npm start` serves the built React app and the whole API from FastAPI on port 8000.
 
 ### 5. Demo accounts
 Every seeded account uses the password **`Password123!`** (the sign‑in page has one‑click buttons).
@@ -86,10 +84,10 @@ To scan without a camera: as an attendee open **Show QR**, or copy a ticket's `q
 ### 6. Tests
 
 ```bash
-npm test     # 15 Express business-rule tests (re-seeds the DB!) + 7 FastAPI tests
+npm test     # 24 pytest tests: every business rule + analytics (re-seeds the DB!)
 ```
 
-The Express suite runs against real MySQL and covers every rule below, including concurrency (8 parallel buyers for the last ticket; the same QR at two gates at once).
+The suite starts the real API on a free port and runs against real MySQL, covering every rule below, including concurrency (8 parallel buyers for the last ticket; the same QR at two gates at once).
 
 ---
 
@@ -97,24 +95,24 @@ The Express suite runs against real MySQL and covers every rule below, including
 
 | # | Rule | Database | API |
 |---|---|---|---|
-| 1 | ≤ `max_per_order` per tier per order; ≤ 10 tickets per buyer per festival (PAID + PENDING) | `chk_tiers_max`, `trg_tickets_bi` | `services/orders.js` |
+| 1 | ≤ `max_per_order` per tier per order; ≤ 10 tickets per buyer per festival (PAID + PENDING) | `chk_tiers_max`, `trg_tickets_bi` | `services/orders.py` |
 | 2 | Tier quota is hard; Σ quotas ≤ `daily_capacity` | `trg_tiers_bi/bu`, `trg_festivals_bu` | `SELECT … FOR UPDATE` on tier rows |
-| 3 | 10‑minute checkout hold → EXPIRED + tickets VOID | `chk_orders_expiry` | order‑expiry job (`jobs.js`, `FOR UPDATE SKIP LOCKED`) + check at payment |
+| 3 | 10‑minute checkout hold → EXPIRED + tickets VOID | `chk_orders_expiry` | order‑expiry job (`jobs.py`, `FOR UPDATE SKIP LOCKED`) + check at payment |
 | 4 | Holder age ≥ `min_age` on start date | `trg_tickets_bi`, `trg_tickets_bu` | pre‑checks with friendly messages |
-| 5 | One transfer, VALID only, ≥ 48 h before start; new QR token | `UNIQUE(ticket_id)`, `chk_transfers_users`, `trg_transfers_bi`, `trg_tickets_bu` | `services/tickets.js` (row lock) |
-| 6 | Refund 90% (≥ 30 days) / 50% (7–29) / 0% (< 7); never after check‑in | `v_ticket_refund_quote` | `services/tickets.js` |
-| 7 | Cancellation → 100% refunds (one REFUND row per order), approved stalls annulled + fees reimbursed | | `services/festivals.js#cancelFestival` (one transaction) |
-| 8 | Anti‑passback: IN accepted only if VALID/CHECKED_IN, festival live, last accepted scan is OUT or none | `v_ticket_last_scan`, `trg_scans_bi` | `services/scans.js` (ticket row lock) |
-| 9 | Vendor ACTIVE, license (and hygiene cert. for FOOD/BEVERAGE) valid through `end_date` | `chk_vendors_hygiene`, `trg_alloc_bi`, `trg_alloc_bu` | `services/vendors.js#eligibility` |
+| 5 | One transfer, VALID only, ≥ 48 h before start; new QR token | `UNIQUE(ticket_id)`, `chk_transfers_users`, `trg_transfers_bi`, `trg_tickets_bu` | `services/tickets.py` (row lock) |
+| 6 | Refund 90% (≥ 30 days) / 50% (7–29) / 0% (< 7); never after check‑in | `v_ticket_refund_quote` | `services/tickets.py` |
+| 7 | Cancellation → 100% refunds (one REFUND row per order), approved stalls annulled + fees reimbursed | | `services/festivals.py#cancel_festival` (one transaction) |
+| 8 | Anti‑passback: IN accepted only if VALID/CHECKED_IN, festival live, last accepted scan is OUT or none | `v_ticket_last_scan`, `trg_scans_bi` | `services/scans.py` (ticket row lock) |
+| 9 | Vendor ACTIVE, license (and hygiene cert. for FOOD/BEVERAGE) valid through `end_date` | `chk_vendors_hygiene`, `trg_alloc_bi`, `trg_alloc_bu` | `services/vendors.py#eligibility` |
 | 10 | One APPROVED allocation per stall; ≤ 2 approved stalls per vendor per festival | `UNIQUE(stall_id, approved_marker)`, `trg_alloc_bu` | stall row lock before approval |
-| 11 | Fee due within 7 days of approval else auto‑CANCELLED; vendor cancel < 21 days → 50% forfeited | `v_allocation_balance` | fee‑deadline job, `services/vendors.js#cancel` |
+| 11 | Fee due within 7 days of approval else auto‑CANCELLED; vendor cancel < 21 days → 50% forfeited | `v_allocation_balance` | fee‑deadline job, `services/vendors.py#cancel` |
 | 12 | DRAFT → ON_SALE → LIVE → COMPLETED, any but COMPLETED → CANCELLED; sell only ON_SALE; price frozen after first sale | `trg_festivals_bu`, `trg_tickets_bi`, `trg_tiers_bu` | lifecycle job advances ON_SALE→LIVE→COMPLETED by date |
 | 13 | Payment belongs to exactly one order or allocation; Σ REFUND ≤ Σ CAPTURED | `chk_payments_arc`, `trg_payments_bi`, `UNIQUE(provider_ref)` | idempotent webhook, reconciliation report |
 
 Concurrency cases from Part 3 d: overselling (tier row `FOR UPDATE`), the same QR at two gates (ticket row `FOR UPDATE`), two coordinators approving one stall (stall row `FOR UPDATE` + unique marker), refund vs. transfer (both lock the ticket and re‑check `VALID`), duplicate webhooks (`UNIQUE(provider_ref)`).
 
 ### Notes on the schema
-- Table and column names, types and constraints follow the assignment document. No calculated values are stored; totals, sold counts, remaining quota, refund quotes, fee balances and "inside now" counts come from the views at the end of [`schema.sql`](database/schema.sql).
+- Table and column names, types and constraints follow the assignment document. No calculated values are stored; totals, sold counts, remaining quota, refund quotes, fee balances and "inside now" counts come from the views in Part 3 of [`festpass.sql`](database/festpass.sql).
 - MySQL does not allow `ON UPDATE CASCADE` on a column that a `CHECK` constraint uses. `Payments.order_id/allocation_id` and `TicketTransfers.from_user_id/to_user_id` therefore use `ON UPDATE RESTRICT`. Surrogate keys never change, so behaviour is identical.
 - Extra guard triggers beyond the document: festival organizer must have role ORGANIZER, vendor manager must be VENDOR_MANAGER, scans must be made by GATE_STAFF, refunds cannot exceed charges (rule 13), terminal ticket states cannot change.
 - Users are never hard‑deleted: "Delete" sets `account_status = 'DELETED'` and anonymises name/email/phone (KVKK) while keeping orders, payments and scans for the audit trail.
@@ -125,7 +123,7 @@ Concurrency cases from Part 3 d: overselling (tier row `FOR UPDATE`), the same Q
 
 All routes are JSON. Send `Authorization: Bearer <token>` from `/api/auth/login`.
 
-**Express, `/api`**
+**Core, `/api`** (interactive docs at `/api/docs`)
 
 | Area | Endpoints |
 |---|---|
@@ -141,12 +139,12 @@ All routes are JSON. Send `Authorization: Bearer <token>` from `/api/auth/login`
 | Payments | `POST /payments/webhook` (header `X-Webhook-Secret`), `GET /payments/mine` |
 | Admin | `GET/POST /admin/users`, `PATCH /admin/users/:id/status` |
 
-**FastAPI, `/analytics`** (ORGANIZER sees own festivals, AUDITOR sees all; interactive docs at `/analytics/docs`)
+**Analytics, `/analytics`** (read‑only; ORGANIZER sees own festivals, AUDITOR sees all)
 
 `GET /dashboard`, `GET /festivals/{id}/report`, `GET /festivals/{id}/attendees`, `GET /payments`, `GET /reconciliation`, `GET /transfers`, `GET /scans`, `GET /tickets/{id}/trail`. Add `?format=csv` to attendees, payments, transfers and scans for a CSV download.
 
 ### Payments
-The gateway is simulated (`server/src/services/gateway.js`): every method captures instantly, except a card number ending in **0002**, which is declined and recorded as a FAILED payment. Each charge and refund is its own `Payments` row with a unique `provider_ref`. To plug in a real PSP, replace `gateway.charge/refund` and point its webhook at `POST /api/payments/webhook`.
+The gateway is simulated (`api/app/services/gateway.py`): every method captures instantly, except a card number ending in **0002**, which is declined and recorded as a FAILED payment. Each charge and refund is its own `Payments` row with a unique `provider_ref`. To plug in a real PSP, replace `gateway.charge` and `gateway.refund_reference` and point its webhook at `POST /api/payments/webhook`.
 
 ---
 
@@ -154,16 +152,15 @@ The gateway is simulated (`server/src/services/gateway.js`): every method captur
 - Passwords hashed with bcrypt (cost 10); only the hash is stored (`CHAR(60)`).
 - JWT (HS256, 8 h) with role checks on every route; suspended/deleted accounts are rejected on each request.
 - Public sign‑up can only create attendee or vendor accounts; staff accounts are created by organizers.
-- All SQL is parameterised; inputs validated with zod (Express) and typed query parameters (FastAPI).
+- All SQL is parameterised; every body, path and query parameter is validated by Pydantic.
 - Organizers only see and change their own festivals; the auditor role is read‑only.
 - QR tokens are 256‑bit random values and are only returned to the current holder of a paid ticket; ticket IDs are UUIDs.
-- Login and registration are rate‑limited; helmet sets security headers; the webhook secret is compared in constant time.
+- Login and registration are rate‑limited; security headers are set on every response; the webhook secret is compared in constant time.
 
 ## Project layout
 
 ```
-database/   schema.sql (tables, triggers, views) · seed.sql · grant.sql
-server/     Express API: src/routes, src/services (business rules), src/jobs.js, tests/
-reports/    FastAPI analytics: app/reports.py, tests/
+database/   festpass.sql (tables, triggers, views, demo data) · grant.sql (app user, run as root)
+api/        FastAPI: app/routers (HTTP), app/services (business rules), app/jobs.py, scripts/init_db.py, tests/
 client/     React app: src/pages (public, attendee, vendor, gate, admin), src/components
 ```
