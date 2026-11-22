@@ -145,13 +145,18 @@ A suggested 15-minute order: **1 → 2 → 5 → 6 → 7 → 8**. Pick from 3, 4
 
 ### Scenario 1: Organizer dashboard and analytics (FastAPI)
 Sign in as **organizer@festpass.com**.
-1. **Dashboard**: net revenue, tickets sold, refunds and stall fees, the 30-day revenue chart (captured charges against refunds), the payment-method split and the latest orders. Point out the footer: these figures come from the FastAPI analytics service.
-2. The yellow **Needs your review** banner counts the pending stall applications and the new vendor.
-3. **Festivals → Bosphorus Beats → Overview**: sales per tier, daily sales and the hourly gate-entry chart.
-4. **Attendees** tab: filter by status (VALID / CHECKED_IN / REFUNDED / VOID), then **Export CSV**.
-5. **Gate scans** tab: every scan with its result, gate and staff member; **Export CSV**.
-6. **Payments & refunds**: the full ledger, including the FAILED card payment and the REFUND rows.
-7. Optional: open `http://localhost:8000/analytics/docs` to show the FastAPI interactive docs.
+1. **Dashboard** top row: tickets sold, total revenue (charged minus refunded), tickets remaining against capacity, and attendance (checked in, inside now).
+2. **Ticket sales over time**: tickets sold per day with the running total. Next to it, **Tickets by status** (sold, checked in, refunded, void, on hold).
+3. **Ticket revenue over time** (charges against refunds) and **Payment methods**.
+4. **Payments & refunds** (ticket and stall-fee charges and refunds, failed payments, the ledger rows by type and status), **Vendor applications** (waiting, approved, rejected, cancelled; fees agreed, paid and due; stalls allocated) and **Gate entries** (entries, exits, refusals by reason, per gate and per day).
+5. **Filters**: pick *Bosphorus Beats* in **Festival**, then **7 days**. Every number and graph recalculates for that festival and period. The URL keeps the filters, so you can bookmark or share a view. **Clear** goes back to all festivals.
+6. Point out the footer: every figure is computed live from the database by the FastAPI analytics service. Buy a ticket in the attendee window and refresh the dashboard to prove it.
+7. The yellow **Needs your review** banner counts the pending stall applications and the new vendor.
+8. **Festivals → Bosphorus Beats → Overview**: sales per tier, daily sales and the hourly gate-entry chart.
+9. **Attendees** tab: filter by status (VALID / CHECKED_IN / REFUNDED / VOID), then **Export CSV**.
+10. **Gate scans** tab: every scan with its result, gate and staff member; **Export CSV**.
+11. **Payments & refunds**: the full ledger, including the FAILED card payment and the REFUND rows.
+12. Optional: open `http://localhost:8000/analytics/docs` to show the FastAPI interactive docs, including `GET /analytics/dashboard` with its `festival_id`, `from` and `to` filters.
 
 ### Scenario 2: Buying a ticket (rules 1, 3, 4, 12, 13)
 Sign in as **can@festpass.com** (private window).
@@ -249,7 +254,7 @@ Signed in as **organizer@festpass.com**:
 | 10 | One vendor per stall, ≤ 2 stalls per vendor per festival | Scenario 7.3 |
 | 11 | Stall fee within 7 days; late vendor cancellation forfeits 50 % | Scenario 6.2, 6.4 |
 | 12 | Festival lifecycle, price freeze | Scenario 8.2, 8.4 |
-| 13 | Refunds never exceed charges; one ledger | Scenario 1.6, 4.5 |
+| 13 | Refunds never exceed charges; one ledger | Scenario 1.4, 1.11, 4.5 |
 
 ---
 

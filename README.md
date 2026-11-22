@@ -162,7 +162,7 @@ All routes are JSON. Send `Authorization: Bearer <token>` from `/api/auth/login`
 
 **FastAPI, `/analytics`** (ORGANIZER sees own festivals, AUDITOR sees all; interactive docs at `/analytics/docs`)
 
-`GET /dashboard`, `GET /festivals/{id}/report`, `GET /festivals/{id}/attendees`, `GET /payments`, `GET /reconciliation`, `GET /transfers`, `GET /scans`, `GET /tickets/{id}/trail`. Add `?format=csv` to attendees, payments, transfers and scans for a CSV download.
+`GET /dashboard` (optional `festival_id`, `from`, `to`), `GET /festivals/{id}/report`, `GET /festivals/{id}/attendees`, `GET /payments`, `GET /reconciliation`, `GET /transfers`, `GET /scans`, `GET /tickets/{id}/trail`. Add `?format=csv` to attendees, payments, transfers and scans for a CSV download.
 
 ### Payments
 The gateway is simulated (`server/src/services/gateway.js`): every method captures instantly, except a card number ending in **0002**, which is declined and recorded as a FAILED payment. Each charge and refund is its own `Payments` row with a unique `provider_ref`. To plug in a real PSP, replace `gateway.charge/refund` and point its webhook at `POST /api/payments/webhook`.

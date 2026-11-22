@@ -1,5 +1,5 @@
-import { ResponsiveContainer, AreaChart, Area, XAxis, YAxis, Tooltip, CartesianGrid, BarChart, Bar, PieChart, Pie, Cell, Legend } from 'recharts';
-import { date, moneyCompact, money } from '../lib/format';
+import { ResponsiveContainer, AreaChart, Area, XAxis, YAxis, Tooltip, CartesianGrid, BarChart, Bar, PieChart, Pie, Cell, Legend, ComposedChart, Line } from 'recharts';
+import { date, moneyCompact, money, num } from '../lib/format';
 
 export const COLORS = ['#a855f7', '#f472b6', '#22d3ee', '#fb923c', '#34d399', '#8b85a1'];
 const axis = { fontSize: 12, fill: '#8b85a1' };
@@ -73,6 +73,44 @@ export function Donut({ data, nameKey, valueKey, fmt = (v) => v }) {
         <Tooltip {...tip} formatter={(v, n) => [fmt(v), n]} />
         <Legend wrapperStyle={{ fontSize: 12 }} />
       </PieChart>
+    </ResponsiveContainer>
+  );
+}
+
+/** Tickets sold per day (bars) and the running total (line, right axis). */
+export function SalesChart({ data }) {
+  const rows = data.map((d) => ({ ...d, label: date(d.day, { day: 'numeric', month: 'short' }) }));
+  return (
+    <ResponsiveContainer>
+      <ComposedChart data={rows} margin={{ left: 0, right: 0, top: 8 }}>
+        <CartesianGrid stroke="rgba(255,255,255,0.06)" vertical={false} />
+        <XAxis dataKey="label" tick={axis} tickLine={false} axisLine={false} minTickGap={20} />
+        <YAxis yAxisId="day" tick={axis} tickLine={false} axisLine={false} width={36} allowDecimals={false} />
+        <YAxis yAxisId="total" orientation="right" tick={axis} tickLine={false} axisLine={false} width={48} allowDecimals={false} tickFormatter={num} />
+        <Tooltip {...tip} formatter={(v, n) => [num(v), n]} />
+        <Legend wrapperStyle={{ fontSize: 12 }} />
+        <Bar yAxisId="day" dataKey="tickets" name="Sold that day" fill="#a855f7" radius={[4, 4, 0, 0]} maxBarSize={22} />
+        <Line yAxisId="total" type="monotone" dataKey="cumulative_tickets" name="Total sold" stroke="#22d3ee" strokeWidth={2} dot={false} />
+      </ComposedChart>
+    </ResponsiveContainer>
+  );
+}
+
+/** Gate entries, exits and refusals per day. */
+export function GateDailyChart({ data }) {
+  const rows = data.map((d) => ({ ...d, label: date(d.day, { day: 'numeric', month: 'short' }) }));
+  return (
+    <ResponsiveContainer>
+      <BarChart data={rows} margin={{ left: 0, right: 8, top: 8 }}>
+        <CartesianGrid stroke="rgba(255,255,255,0.06)" vertical={false} />
+        <XAxis dataKey="label" tick={axis} tickLine={false} axisLine={false} minTickGap={16} />
+        <YAxis tick={axis} tickLine={false} axisLine={false} width={40} allowDecimals={false} />
+        <Tooltip {...tip} />
+        <Legend wrapperStyle={{ fontSize: 12 }} />
+        <Bar dataKey="entries" name="Entries" stackId="a" fill="#34d399" maxBarSize={36} />
+        <Bar dataKey="exits" name="Exits" stackId="a" fill="#60a5fa" maxBarSize={36} />
+        <Bar dataKey="rejected" name="Refused" stackId="a" fill="#f87171" radius={[6, 6, 0, 0]} maxBarSize={36} />
+      </BarChart>
     </ResponsiveContainer>
   );
 }

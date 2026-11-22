@@ -402,6 +402,8 @@ table.table { width: 100%; border-collapse: collapse; font-size: 14px; }
 .progress { height: 6px; background: rgba(255, 255, 255, 0.08); border-radius: 999px; overflow: hidden; }
 .progress > span { display: block; height: 100%; background: var(--grad); border-radius: 999px; transition: width 0.6s var(--ease); }
 .progress.green > span { background: var(--success); }
+.progress.amber > span { background: var(--warning); }
+.progress.red > span { background: var(--danger); }
 
 /* ---------- festival media (poster art + optional photo) ---------- */
 .art { position: absolute; inset: 0; overflow: hidden; background: #0b0614; }
