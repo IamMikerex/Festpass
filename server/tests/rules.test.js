@@ -88,6 +88,28 @@ test('rule 3: expired hold voids tickets and frees quota', async () => {
   const o = await api('GET', `/orders/${oid}`, { token: tokens.elif });
   assert.equal(o.data.order.status, 'EXPIRED');
   assert.ok(o.data.order.tickets.every((t) => t.status === 'VOID'));
+  // Paying again after the order is already EXPIRED (e.g. closed by the expiry job) is also 410, not 409,
+  // so the checkout page shows its "hold expired" screen.
+  const again = await api('POST', `/orders/${oid}/pay`, { token: tokens.elif, body: { method: 'WALLET' } });
+  assert.equal(again.status, 410);
+});
+
+test('stalls: unused stall can be deleted, one with applications cannot', async () => {
+  let r = await api('POST', '/festivals/1/stalls', { token: tokens.organizer, body: { stall_code: 'DEL-1', zone: 'CAMPING', size_m2: 6, base_fee: 1000 } });
+  assert.equal(r.status, 201);
+  assert.equal((await api('DELETE', `/festivals/1/stalls/${r.data.stall_id}`, { token: tokens.organizer })).status, 200);
+  r = await api('POST', '/festivals/1/stalls', { token: tokens.organizer, body: { stall_code: 'DEL-2', zone: 'CAMPING', size_m2: 6, base_fee: 1000 } });
+  const vendor = (await api('GET', '/vendors/mine', { token: tokens.vendor })).data.vendors.find((v) => v.status === 'ACTIVE');
+  assert.equal((await api('POST', '/allocations', { token: tokens.vendor, body: { vendor_id: vendor.vendor_id, stall_id: r.data.stall_id } })).status, 201);
+  assert.equal((await api('DELETE', `/festivals/1/stalls/${r.data.stall_id}`, { token: tokens.organizer })).status, 409);
+  assert.equal((await api('DELETE', `/festivals/1/stalls/${r.data.stall_id}`, { token: tokens.organizer2 })).status, 403);
+});
+
+test('auth: successful sign-ins do not count toward the sign-in limit', async () => {
+  for (let i = 0; i < 35; i += 1) {
+    const r = await api('POST', '/auth/login', { body: { email: 'gate@festpass.com', password: 'Password123!' } });
+    assert.equal(r.status, 200, `sign-in ${i + 1} should succeed`);
+  }
 });
 
 test('rule 2: quota is hard (sold out)', async () => {

@@ -52,4 +52,6 @@ async function run() {
   await conn.end();
 }
 
-run().catch((e) => { console.error(e.message); process.exit(1); });
+if (require.main === module) run().catch((e) => { console.error(e.message); process.exit(1); });
+
+module.exports = { splitSql };

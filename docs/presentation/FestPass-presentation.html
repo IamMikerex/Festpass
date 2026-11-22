@@ -1,0 +1,359 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+<title>FestPass: Implementation Presentation</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300..700&display=swap">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600&display=swap">
+<style>* { margin: 0 }
+html, body { background: #07050D; }
+body { font: 32px/1.2 sans-serif; }
+body > section { width: 1920px; height: 1080px; overflow: hidden; box-sizing: border-box; position: relative; isolation: isolate; }
+aside { display: none !important; }
+p, li, h1, h2, h3, td, th { overflow-wrap: break-word; text-wrap: pretty; }
+x-shape, x-icon, x-embed { display: block; }
+.hint { position: fixed; right: 16px; bottom: 12px; font: 14px/1.4 Inter, sans-serif; color: #B8B0D0; opacity: .7; }
+@media screen {
+  body { overflow: hidden; }
+  body > section { position: absolute; left: 50%; top: 50%; transform-origin: center; display: none; }
+  body > section.on { display: flex; }
+}
+@media print {
+  @page { size: 1920px 1080px; margin: 0; }
+  body > section { display: flex; page-break-after: always; break-after: page; transform: none !important; }
+  .hint { display: none; }
+  *, *::before, *::after { animation: none !important; transition: none !important; }
+}
+:root {
+  --bg: #0E0A1A;
+  --bg2: #171126;
+  --card: #211A35;
+  --line: #3A2F57;
+  --text: #F5F3FB;
+  --muted: #B8B0D0;
+  --purple: #C084FC;
+  --pink: #F472B6;
+  --cyan: #22D3EE;
+  --accent: #C084FC;
+  --ink: #120C1F;
+}
+
+section {
+  background: var(--bg);
+  color: var(--text);
+  padding: 128px;
+  box-sizing: border-box;
+  display: flex;
+  flex-direction: column;
+  font-family: 'Inter', sans-serif;
+}
+section.alt { background: var(--bg2); }
+section.statement { background: var(--accent); color: var(--ink); justify-content: center; }
+section.withfoot { padding: 128px 128px 160px; }
+
+h1, h2, h3 { font-family: 'Space Grotesk', sans-serif; margin: 0; }
+h1 { font-size: 104px; font-weight: 700; line-height: 1.05; letter-spacing: -1px; }
+h2 { font-size: 64px; font-weight: 600; line-height: 1.1; margin-bottom: 40px; }
+h3 { font-size: 32px; font-weight: 600; line-height: 1.2; }
+p { font-size: 28px; line-height: 1.4; margin: 0; }
+ul, ol { font-size: 24px; line-height: 1.4; margin: 0; padding-left: 28px; }
+li { margin: 0 0 8px; }
+
+.lead { font-size: 32px; line-height: 1.35; }
+.small { font-size: 24px; line-height: 1.4; }
+.muted { color: var(--muted); }
+.kicker { font-size: 24px; font-weight: 600; letter-spacing: 3px; text-transform: uppercase; color: var(--pink); margin-bottom: 24px; }
+.hl { color: var(--purple); font-weight: 600; }
+.pk { color: var(--pink); font-weight: 600; }
+.cy { color: var(--cyan); }
+.code { color: var(--cyan); }
+
+.foot { position: absolute; left: 128px; bottom: 64px; width: 1664px; font-size: 24px; color: var(--muted); }
+
+/* cards */
+.card { background: var(--card); border: 2px solid var(--line); border-radius: 20px; padding: 32px; box-sizing: border-box; }
+.card h3 { margin-bottom: 12px; }
+.card .small { color: var(--muted); }
+.card .tag { font-size: 24px; font-weight: 600; color: var(--pink); margin-bottom: 8px; }
+.grid2 { display: grid; grid-template-columns: 1fr 1fr; gap: 24px; }
+.grid3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 24px; }
+.row { display: flex; gap: 24px; }
+.row > .card { flex: 1; }
+
+/* big numbers */
+.stats { display: flex; gap: 24px; margin-top: 40px; }
+.stat { flex: 1; border-top: 4px solid var(--purple); padding-top: 16px; }
+.stat .num { font-family: 'Space Grotesk', sans-serif; font-size: 64px; font-weight: 700; line-height: 1.1; color: var(--text); }
+.stat .lbl { font-size: 24px; color: var(--muted); }
+
+/* tables */
+table.t { border-collapse: collapse; width: 100%; font-size: 24px; line-height: 1.35; }
+table.t th { text-align: left; font-family: 'Space Grotesk', sans-serif; font-weight: 600; color: var(--pink); padding: 0 20px 12px 0; border-bottom: 2px solid var(--line); }
+table.t td { padding: 12px 20px 12px 0; border-bottom: 1px solid var(--line); vertical-align: top; color: var(--text); }
+table.t td.n { font-family: 'Space Grotesk', sans-serif; font-weight: 700; color: var(--purple); width: 56px; }
+table.t td.k { font-weight: 600; width: 260px; }
+table.t td.e { color: var(--cyan); width: 600px; }
+table.t td.code { color: var(--cyan); }
+table.t.roomy td { padding-top: 20px; padding-bottom: 20px; }
+table.t.lg { font-size: 28px; }
+ul.big { font-size: 28px; }
+ul.big li { margin-bottom: 12px; }
+.step .body { font-size: 28px; line-height: 1.4; color: var(--muted); }
+
+/* ER and architecture boxes */
+.canvas { position: relative; width: 1664px; flex: 1; }
+.ent { position: absolute; width: 248px; background: var(--card); border: 2px solid var(--purple); border-radius: 14px; padding: 12px 14px; box-sizing: border-box; }
+.ent h3 { font-size: 26px; }
+.ent .small { color: var(--muted); }
+.ent.hub { width: 1664px; border-color: var(--pink); display: flex; gap: 24px; align-items: baseline; }
+.ent.money { border-color: var(--cyan); }
+.box { position: absolute; background: var(--card); border: 2px solid var(--line); border-radius: 20px; padding: 32px; box-sizing: border-box; }
+.box h3 { margin-bottom: 4px; }
+.box .role { font-size: 24px; color: var(--pink); font-weight: 600; margin-bottom: 16px; }
+.lab { position: absolute; font-size: 24px; color: var(--muted); }
+
+/* steps */
+.steps { display: flex; gap: 24px; }
+.step { flex: 1; background: var(--card); border-radius: 20px; padding: 28px; box-sizing: border-box; border-top: 6px solid var(--purple); }
+.step .no { font-family: 'Space Grotesk', sans-serif; font-size: 64px; font-weight: 700; color: var(--purple); line-height: 1; margin-bottom: 12px; }
+.step h3 { margin-bottom: 12px; }
+.step .small { color: var(--muted); }
+.note { margin-top: 32px; background: var(--card); border-left: 6px solid var(--cyan); border-radius: 12px; padding: 24px 32px; }
+
+/* outcome chips */
+table.t td.ok { color: #4ADE80; font-weight: 600; }
+table.t td.bad { color: #FCA5A5; font-weight: 600; }
+table.t td.dup { color: #FBBF24; font-weight: 600; }
+
+/* motion */
+@keyframes rise { from { opacity: 0; transform: translateY(24px); } }
+@keyframes fadein { from { opacity: 0; } }
+.r1 { animation: rise 500ms ease-out both; }
+.r2 { animation: rise 500ms ease-out 150ms both; }
+.r3 { animation: rise 500ms ease-out 300ms both; }
+.r4 { animation: rise 500ms ease-out 450ms both; }
+.r5 { animation: rise 500ms ease-out 600ms both; }
+.f1 { animation: fadein 600ms ease-out 300ms both; }
+</style></head>
+<body>
+<section id="cover" class="withfoot" data-transition="fade">
+<svg aria-label="Decorative rings" style="position:absolute;left:1060px;top:90px;width:900px;height:900px" viewBox="0 0 900 900"><defs><radialGradient id="cg" cx="50%" cy="50%" r="50%"><stop offset="0%" stop-color="#A855F7" stop-opacity="0.55"/><stop offset="100%" stop-color="#0E0A1A" stop-opacity="0"/></radialGradient></defs><circle cx="450" cy="450" r="440" fill="url(#cg)"/><circle cx="450" cy="450" r="330" fill="none" stroke="#F472B6" stroke-width="3" stroke-opacity="0.6"/><circle cx="450" cy="450" r="230" fill="none" stroke="#22D3EE" stroke-width="3" stroke-opacity="0.5"/><circle cx="450" cy="450" r="130" fill="none" stroke="#C084FC" stroke-width="3" stroke-opacity="0.7"/></svg>
+<div style="margin-top:auto;margin-bottom:auto;width:1100px">
+<p class="kicker r1">Database Systems project · [Course code]</p>
+<h1 class="r2">FestPass</h1>
+<p class="lead r3" style="margin-top:32px;color:#B8B0D0">How we built a festival ticketing, vendor and gate system on React, Express, FastAPI and MySQL, with every business rule enforced by the database.</p>
+</div>
+<p class="foot">[Team member names] · [University] · [Presentation date]</p>
+<aside>Introduce the team and the project in one breath: FestPass is a complete festival platform. Attendees buy and hold tickets, organizers run festivals and vendors, gate staff scan QR codes, and an auditor checks the money. The point of this talk is the actual implementation: the schema, the 13 rules and how the code keeps them true. Fill in the bracketed names, course code and date before presenting.</aside>
+</section>
+<section id="objectives" class="alt">
+<h2>Project introduction and objectives</h2>
+<p class="lead r1">FestPass runs a festival from the first ticket sale to the last gate scan. Five roles share one MySQL database, which refuses any change that breaks a business rule.</p>
+<div class="grid2" style="margin-top:40px">
+<div class="card r2"><h3>Sell tickets safely</h3><p class="small">Tier quotas, 10-minute checkout holds, age limits and purchase limits that hold under concurrent buyers.</p></div>
+<div class="card r3"><h3>Run the gates</h3><p class="small">A unique QR token per ticket, scanned at the gate with anti-passback on every entry and exit.</p></div>
+<div class="card r4"><h3>Manage vendors</h3><p class="small">Stall applications, document checks, approvals and fee deadlines for food, drink and merchandise vendors.</p></div>
+<div class="card r5"><h3>Report from real data</h3><p class="small">Dashboards, ledgers and audit trails computed live from the database by a read-only FastAPI service.</p></div>
+</div>
+<div class="stats f1">
+<div class="stat"><p class="num">11</p><p class="lbl">tables</p></div>
+<div class="stat"><p class="num">12</p><p class="lbl">triggers</p></div>
+<div class="stat"><p class="num">6</p><p class="lbl">views</p></div>
+<div class="stat"><p class="num">5</p><p class="lbl">user roles</p></div>
+<div class="stat"><p class="num">13</p><p class="lbl">business rules</p></div>
+</div>
+<aside>The objective was not just a working website but a database that defends its own rules. That is why the counts at the bottom matter: 11 tables with CHECK, UNIQUE and foreign-key constraints, 12 triggers that raise SQLSTATE 45000 when a rule is broken, and 6 views that the API and analytics share. The five roles are attendee, organizer, vendor manager, gate staff and finance auditor.</aside>
+</section>
+<section id="problems">
+<h2>Problems FestPass solves</h2>
+<table class="t roomy r1">
+<tr><th style="width:560px">Problem at a real festival</th><th>How FestPass handles it</th></tr>
+<tr><td class="k" style="width:560px">Overselling when hundreds buy at once</td><td>Tier rows are locked during checkout, and quotas are enforced by triggers</td></tr>
+<tr><td class="k">Fake or copied tickets</td><td>A random 256-bit QR token per ticket, replaced when the ticket is transferred</td></tr>
+<tr><td class="k">Passing a ticket back over the fence</td><td>Anti-passback: entry is only accepted if the last accepted scan was an exit</td></tr>
+<tr><td class="k">Abandoned checkouts blocking stock</td><td>A 10-minute hold, after which a job expires the order and voids its tickets</td></tr>
+<tr><td class="k">Unclear refunds and cancellations</td><td>A fixed 90 / 50 / 0 % refund schedule, and full refunds if a festival is cancelled</td></tr>
+<tr><td class="k">Unlicensed food vendors</td><td>License and hygiene certificate must be valid until the festival ends</td></tr>
+<tr><td class="k">Reports nobody trusts</td><td>Every figure is a SQL query on live data, reconciled against payments</td></tr>
+</table>
+<aside>Each row here maps to one or more of the 13 business rules that come later. The key message: these are problems of concurrency, fraud and money, so they have to be solved in the database and in transactions, not only in the user interface.</aside>
+</section>
+<section id="architecture" class="alt">
+<h2>System architecture</h2>
+<div class="canvas">
+<svg aria-label="Arrows: React calls Express; Express reads and writes MySQL and proxies analytics to FastAPI; FastAPI reads MySQL" class="f1" style="position:absolute;left:0;top:0;width:1664px;height:714px" viewBox="0 0 1664 714"><defs><marker id="ah" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto"><path d="M0 0 L10 5 L0 10 z" fill="#C084FC"/></marker></defs><g stroke="#C084FC" stroke-width="4" fill="none" marker-end="url(#ah)"><path d="M380 260 L636 150"/><path d="M860 300 L860 396"/><path d="M1080 150 L1280 260"/><path d="M1080 560 L1280 440"/></g></svg>
+<div class="box r1" style="left:0;top:120px;width:380px;height:420px"><h3>React 18 + Vite</h3><p class="role">Browser client</p><ul><li>Pages for all five roles</li><li>Recharts dashboards</li><li>QR display and camera scanner</li></ul></div>
+<div class="box r2" style="left:640px;top:0;width:440px;height:300px"><h3>Express API</h3><p class="role">Core API · port 4000</p><ul><li>JWT auth, zod validation</li><li>Services run in transactions</li><li>Jobs every 30 s (rules 3, 11, 12)</li></ul></div>
+<div class="box r3" style="left:640px;top:400px;width:440px;height:300px"><h3>FastAPI</h3><p class="role">Analytics · port 8000</p><ul><li>Dashboard, reports, ledgers</li><li>CSV exports, audit trails</li><li>Read-only database account</li></ul></div>
+<div class="box r4" style="left:1284px;top:120px;width:380px;height:420px;border-color:#F472B6"><h3>MySQL 8</h3><p class="role">Single source of truth</p><ul><li>11 tables, InnoDB, utf8mb4</li><li>12 triggers, 6 views</li><li>CHECK, UNIQUE, FK</li></ul></div>
+<p class="lab" style="left:430px;top:250px;width:200px">REST + JWT</p>
+<p class="lab" style="left:880px;top:330px;width:240px">/analytics proxy</p>
+<p class="lab" style="left:1120px;top:120px;width:200px">read / write</p>
+<p class="lab" style="left:1120px;top:560px;width:200px">read only</p>
+</div>
+<aside>The browser only ever talks to Express. Express owns every write and runs each business operation in a database transaction. Requests under /analytics are forwarded to FastAPI, which verifies the same JWT and only has SELECT privileges. In development Vite proxies /api to port 4000 and /analytics to port 8000; in production Express serves the built React app and the proxy on one port. MySQL is the single source of truth: if the API had a bug, the triggers would still refuse an invalid change.</aside>
+</section>
+<section id="er">
+<h2>Database ER diagram</h2>
+<div class="canvas">
+<svg aria-label="Entity relationship lines between the 11 tables" class="f1" style="position:absolute;left:-40px;top:0;width:1744px;height:720px" viewBox="-40 0 1744 720"><g stroke="#8B7FB0" stroke-width="3" fill="none"><path d="M124 56 V346"/><path d="M407 56 V346"/><path d="M689 56 V346"/><path d="M1540 56 V346"/><path d="M124 346 H1540"/><path d="M407 346 V622"/><path d="M689 346 V622"/><path d="M407 622 H1254"/><path d="M1254 346 V622"/><path d="M124 622 L407 346"/><path d="M124 622 H-28 V56 H124"/><path d="M689 622 V700 H1692 V56 H1540"/></g><path d="M1254 56 V346" stroke="#8B7FB0" stroke-width="3" stroke-dasharray="10 8" fill="none"/></svg>
+<div class="ent hub r1" style="left:0;top:24px"><h3>Users</h3><p class="small">user_id · email · password_hash · date_of_birth · role (5 roles) · account_status</p></div>
+<p class="lab f1" style="left:740px;top:130px;width:480px">Each line is a foreign key, one to many. Dashed means optional. Teal boxes hold money.</p>
+<div class="ent r2" style="left:0;top:300px"><h3>TicketTransfers</h3><p class="small">from → to user</p></div>
+<div class="ent r2" style="left:283px;top:300px"><h3>Tickets</h3><p class="small">qr_token · status</p></div>
+<div class="ent r2" style="left:565px;top:300px"><h3>Orders</h3><p class="small">expires_at</p></div>
+<div class="ent money r2" style="left:847px;top:300px"><h3>Payments</h3><p class="small">order XOR stall</p></div>
+<div class="ent money r2" style="left:1130px;top:300px"><h3>StallAllocations</h3><p class="small">agreed_fee</p></div>
+<div class="ent r2" style="left:1416px;top:300px"><h3>Vendors</h3><p class="small">license, hygiene</p></div>
+<div class="ent r3" style="left:0;top:576px"><h3>GateScans</h3><p class="small">IN / OUT result</p></div>
+<div class="ent r3" style="left:283px;top:576px"><h3>TicketTiers</h3><p class="small">price · quota</p></div>
+<div class="ent r3" style="left:565px;top:576px;border-color:#F472B6"><h3>Festivals</h3><p class="small">status · capacity</p></div>
+<div class="ent r3" style="left:1130px;top:576px"><h3>Stalls</h3><p class="small">zone · base_fee</p></div>
+</div>
+<aside>Users is the hub: every actor is a row in Users with one of five roles, so Festivals (organizer_id), Orders (buyer_id), Tickets (holder_id), TicketTransfers (from and to), Vendors (manager_id), GateScans (staff_id) and StallAllocations (reviewed_by, optional) all point to it. The ticket side runs Festivals to TicketTiers to Tickets, with Orders grouping the tickets a buyer paid for. The vendor side runs Festivals to Stalls to StallAllocations to Vendors. Payments is an exclusive arc: each payment belongs to exactly one order or one stall allocation, never both, enforced by chk_payments_arc.</aside>
+</section>
+<section id="tables" class="alt">
+<h2>Database tables and relationships</h2>
+<table class="t r1">
+<tr><th>Table</th><th>One row is</th><th>Links and key constraints</th></tr>
+<tr><td class="k">Users</td><td>an account with one of five roles</td><td><span class="code">UNIQUE(email)</span>, date of birth for age checks</td></tr>
+<tr><td class="k">Festivals</td><td>an event with dates, capacity, minimum age</td><td>organizer_id → Users; status lifecycle</td></tr>
+<tr><td class="k">TicketTiers</td><td>a ticket type with price and quota</td><td>festival_id → Festivals; <span class="code">max_per_order 1–10</span></td></tr>
+<tr><td class="k">Orders</td><td>one checkout by a buyer</td><td>buyer_id → Users, festival_id → Festivals</td></tr>
+<tr><td class="k">Tickets</td><td>one admission, with its QR token</td><td>order, tier, holder; <span class="code">UNIQUE(qr_token)</span></td></tr>
+<tr><td class="k">TicketTransfers</td><td>a ticket handed to another user</td><td><span class="code">UNIQUE(ticket_id)</span>: one transfer only</td></tr>
+<tr><td class="k">Vendors</td><td>a business with license documents</td><td>manager_id → Users; hygiene cert. for food</td></tr>
+<tr><td class="k">Stalls</td><td>a pitch at one festival</td><td>festival_id → Festivals; zone, power, fee</td></tr>
+<tr><td class="k">StallAllocations</td><td>a vendor's application for a stall</td><td>vendor, stall; one APPROVED per stall</td></tr>
+<tr><td class="k">Payments</td><td>a charge or refund</td><td>order XOR allocation; <span class="code">UNIQUE(provider_ref)</span></td></tr>
+<tr><td class="k">GateScans</td><td>every IN or OUT attempt and its result</td><td>ticket_id → Tickets, staff_id → Users</td></tr>
+</table>
+<aside>Point out three design choices. First, Tickets use a UUID primary key and a separate 64-character QR token, so the token can be replaced on transfer without changing the ticket's identity. Second, StallAllocations has a generated column approved_marker that is 1 only when APPROVED, so UNIQUE(stall_id, approved_marker) allows many rejected applications but only one approved one. Third, Payments either points at an order or at an allocation, never both. Six views sit on top: v_tier_availability, v_order_totals, v_ticket_refund_quote, v_ticket_last_scan, v_festival_stats and v_allocation_balance.</aside>
+</section>
+<section id="rules1">
+<h2>The 13 business rules: tickets and money</h2>
+<table class="t r1">
+<tr><th>#</th><th>Rule</th><th>Enforced by</th></tr>
+<tr><td class="n">1</td><td>At most <b>max_per_order</b> per tier per order, and 10 tickets per buyer per festival</td><td class="e">trg_tickets_bi · orders service</td></tr>
+<tr><td class="n">2</td><td>Tier quota is hard, and all quotas together fit the daily capacity</td><td class="e">trg_tiers_bi/bu, trg_festivals_bu · FOR UPDATE</td></tr>
+<tr><td class="n">3</td><td>Checkout holds tickets for 10 minutes, then the order expires and tickets are voided</td><td class="e">chk_orders_expiry · expiry job</td></tr>
+<tr><td class="n">4</td><td>Every holder must reach the festival's minimum age by the start date</td><td class="e">trg_tickets_bi/bu · friendly pre-check</td></tr>
+<tr><td class="n">5</td><td>One transfer per ticket, only while VALID and 48 h before start; a new QR is issued</td><td class="e">UNIQUE(ticket_id), trg_transfers_bi</td></tr>
+<tr><td class="n">6</td><td>Refund 90 % 30+ days out, 50 % at 7–29 days, 0 % under 7; never after check-in</td><td class="e">v_ticket_refund_quote · tickets service</td></tr>
+<tr><td class="n">7</td><td>Cancelling a festival refunds 100 %, annuls stalls and reimburses their fees</td><td class="e">cancelFestival, one transaction</td></tr>
+</table>
+<aside>Each rule is enforced twice. The API checks first so the user gets a clear message, and the database checks again with a trigger, constraint or view so that no code path can skip it. Rule 2 is the concurrency rule: tier rows are locked with SELECT ... FOR UPDATE, so two buyers can never both take the last ticket. Rule 3 is handled by a job that runs every 30 seconds with FOR UPDATE SKIP LOCKED, and payment also re-checks the hold.</aside>
+</section>
+<section id="rules2">
+<h2>The 13 business rules: gates and vendors</h2>
+<table class="t r1">
+<tr><th>#</th><th>Rule</th><th>Enforced by</th></tr>
+<tr><td class="n">8</td><td>Anti-passback: IN only for a valid ticket at a LIVE festival whose last accepted scan was OUT</td><td class="e">v_ticket_last_scan, trg_scans_bi · row lock</td></tr>
+<tr><td class="n">9</td><td>Vendor is ACTIVE; license, and hygiene certificate for food, valid until the festival ends</td><td class="e">chk_vendors_hygiene, trg_alloc_bi/bu</td></tr>
+<tr><td class="n">10</td><td>One approved vendor per stall, at most 2 approved stalls per vendor per festival</td><td class="e">UNIQUE(stall_id, approved_marker), trg_alloc_bu</td></tr>
+<tr><td class="n">11</td><td>Stall fee due within 7 days of approval; a vendor who cancels under 21 days out forfeits 50 %</td><td class="e">v_allocation_balance · fee-deadline job</td></tr>
+<tr><td class="n">12</td><td>DRAFT → ON_SALE → LIVE → COMPLETED, or CANCELLED; sell only ON_SALE; price frozen after first sale</td><td class="e">trg_festivals_bu, trg_tiers_bu · lifecycle job</td></tr>
+<tr><td class="n">13</td><td>Every payment belongs to exactly one order or allocation; refunds never exceed captured</td><td class="e">chk_payments_arc, trg_payments_bi, UNIQUE(provider_ref)</td></tr>
+</table>
+<aside>Rule 8 is demonstrated live at the gate later. Rule 10 uses the generated approved_marker column so a plain UNIQUE index does the work. Rule 11 and rule 12 are time-based, so a scheduled job in Express advances festivals by date and cancels unpaid stall approvals; the triggers still refuse an illegal status jump such as COMPLETED back to ON_SALE. Rule 13 protects the money: the CHECK constraint enforces the exclusive arc, the trigger compares refunds with captured charges, and the unique provider reference makes the payment webhook idempotent.</aside>
+</section>
+<section id="purchase" class="alt">
+<h2>How ticket purchasing works</h2>
+<div class="steps">
+<div class="step r1"><p class="no">1</p><h3>Choose</h3><p class="body">The attendee picks tiers and holders. <span class="code">POST /orders</span> is validated by zod.</p></div>
+<div class="step r2"><p class="no">2</p><h3>Lock</h3><p class="body">One transaction begins. Tier rows are read <span class="code">FOR UPDATE</span>, then status, sale window, quota, limits and age are checked.</p></div>
+<div class="step r3"><p class="no">3</p><h3>Hold</h3><p class="body">The order is PENDING for 10 minutes. Tickets are created, each with a random 256-bit QR token.</p></div>
+<div class="step r4"><p class="no">4</p><h3>Pay</h3><p class="body">The gateway captures the charge, a Payments row is written and the order becomes PAID.</p></div>
+<div class="step r5"><p class="no">5</p><h3>Hold the QR</h3><p class="body">The holder sees the QR code under My tickets. Only the holder can open it.</p></div>
+</div>
+<div class="note f1"><p>If any check fails, the whole transaction rolls back and nothing is sold. If the 10 minutes pass, the expiry job marks the order EXPIRED and voids its tickets, so the stock returns to sale.</p></div>
+<aside>Walk through one purchase. Step 2 is the heart of it: locking the tier rows means a second buyer waits until the first transaction commits, then sees the updated count, so the quota can never be oversold. Each check gives a friendly message that names the rule, for example "You will be under 16 on the festival start date (rule 4)" for a festival with a minimum age of 16. The trigger trg_tickets_bi repeats the checks inside MySQL. In the demo, a card ending 0002 is declined, which shows that a failed payment leaves the order pending and the tickets held until they expire.</aside>
+</section>
+<section id="qr">
+<h2>How QR validation works at the gate</h2>
+<div class="row" style="align-items:flex-start">
+<table class="t lg roomy r1" style="width:1100px">
+<tr><th>Check, in order</th><th>Result if it fails</th></tr>
+<tr><td>Token exists in Tickets (row locked <span class="code">FOR UPDATE</span>)</td><td class="bad">REJECTED_INVALID</td></tr>
+<tr><td>Ticket belongs to the festival at this gate</td><td class="bad">REJECTED_INVALID</td></tr>
+<tr><td>Ticket is VALID or CHECKED_IN, not REFUNDED or VOID</td><td class="bad">REJECTED_INVALID</td></tr>
+<tr><td>Festival status is LIVE</td><td class="bad">REJECTED_NOT_LIVE</td></tr>
+<tr><td>IN: last accepted scan is OUT or none</td><td class="dup">REJECTED_DUPLICATE</td></tr>
+<tr><td>OUT: the holder is currently inside</td><td class="bad">REJECTED_INVALID</td></tr>
+<tr><td>All checks pass; the first IN sets CHECKED_IN</td><td class="ok">ACCEPTED</td></tr>
+</table>
+<div class="card r2" style="flex:1"><h3>Why it holds up</h3><ul class="big" style="margin-top:16px"><li>Tokens are 64 hex characters from a secure random source, with a unique index</li><li>A transfer issues a new token, so an old screenshot stops working</li><li>The row lock means two gates scanning the same code at once give one ACCEPTED and one DUPLICATE</li><li>Every scan of a real ticket, accepted or not, is written to GateScans</li></ul></div>
+</div>
+<aside>The gate staff app uses the phone camera or a typed code and calls POST /scans with the token, gate code and direction. The service locks the ticket row, reads the last accepted scan from v_ticket_last_scan, decides the result and writes a GateScans row, even for refusals, so the audit trail is complete. The trigger trg_scans_bi enforces the same anti-passback rule inside MySQL. In the live demo we scan Ayse's ticket twice: the second scan is refused as a duplicate until she scans OUT.</aside>
+</section>
+<section id="analytics" class="alt">
+<h2>How FastAPI provides analytics</h2>
+<div class="row">
+<div style="width:760px;display:flex;flex-direction:column;gap:24px">
+<div class="card r1" style="padding:24px 32px"><p class="small"><span class="pk">1 · Request.</span> The dashboard calls <span class="code">/analytics/dashboard?festival_id=&amp;from=&amp;to=</span> with the same JWT the user signed in with.</p></div>
+<div class="card r2" style="padding:24px 32px"><p class="small"><span class="pk">2 · Verify.</span> FastAPI checks the token with PyJWT and the shared secret, then the role: organizers see their own festivals, auditors see the ledger.</p></div>
+<div class="card r3" style="padding:24px 32px"><p class="small"><span class="pk">3 · Query.</span> Plain SQL over tables and views such as <span class="code">v_festival_stats</span> and <span class="code">v_order_totals</span>, through a SELECT-only MySQL account.</p></div>
+<div class="card r4" style="padding:24px 32px"><p class="small"><span class="pk">4 · Respond.</span> JSON for the Recharts charts, or CSV for download. No number on screen is hard-coded.</p></div>
+</div>
+<div style="flex:1">
+<table class="t f1">
+<tr><th>Endpoint</th><th>Used for</th></tr>
+<tr><td class="code">/dashboard</td><td>KPIs, sales over time, filters</td></tr>
+<tr><td class="code">/festivals/{id}/report</td><td>tiers, revenue, stalls</td></tr>
+<tr><td class="code">/festivals/{id}/attendees</td><td>attendee list, CSV</td></tr>
+<tr><td class="code">/payments</td><td>finance ledger</td></tr>
+<tr><td class="code">/reconciliation</td><td>orders against payments</td></tr>
+<tr><td class="code">/transfers</td><td>transfer history</td></tr>
+<tr><td class="code">/scans</td><td>gate activity</td></tr>
+<tr><td class="code">/tickets/{id}/trail</td><td>one ticket's audit trail</td></tr>
+</table>
+</div>
+</div>
+<aside>The split is deliberate: Express owns every write, and FastAPI is a separate read-only reporting service, which is how real systems keep heavy reporting away from the transactional path. The dashboard returns total tickets sold, revenue, tickets remaining, attendance, vendor application stats, refund and payment summaries, gate statistics and a gap-filled daily sales series, all filtered by festival and date. Because the MySQL account it uses has only SELECT privileges, even a bug in the reporting code cannot change data. The reconciliation report checks that every paid order matches its captured payments, which backs up rule 13.</aside>
+</section>
+<section id="security">
+<h2>Security and transaction integrity</h2>
+<div class="grid2">
+<div class="card r1" style="border-top:6px solid #F472B6"><h3>Who can do what</h3><ul class="big"><li>Passwords stored as bcrypt hashes</li><li>JWT (HS256) on every request, with a role check per route</li><li>Every request body validated by zod</li><li>Organizers only see their own festivals; a QR is shown only to its holder</li><li>Three MySQL accounts: migrate, app (no DROP), analytics (SELECT only)</li><li>Production refuses to start with weak or default secrets</li></ul></div>
+<div class="card r2" style="border-top:6px solid #22D3EE"><h3>Data that stays correct</h3><ul class="big"><li>Each business operation runs in one transaction: all or nothing</li><li><span class="code">SELECT … FOR UPDATE</span> on tiers, tickets and stalls stops races</li><li>Triggers raise SQLSTATE 45000 if any rule is broken, whatever the caller</li><li>CHECK and UNIQUE constraints: one approved stall, the payment arc</li><li>Payment webhook is idempotent through <span class="code">UNIQUE(provider_ref)</span></li><li>Jobs use <span class="code">FOR UPDATE SKIP LOCKED</span> so they never block buyers</li></ul></div>
+</div>
+<aside>Security has two halves. The left card is about access: who is allowed to call what. The right card is about integrity: once a call is allowed, the data still cannot end up wrong. The strongest point to make is defence in depth: the API checks a rule for a good error message, and the database checks it again in a trigger. For example, the festival cancellation in rule 7 refunds every order, annuls every approved stall and reimburses fees inside one transaction, so a crash half-way leaves nothing half-refunded.</aside>
+</section>
+<section id="deploy" class="alt">
+<h2>Deployment and operations</h2>
+<div class="grid3">
+<div class="card r1"><p class="tag">Production</p><h3>Docker Compose</h3><ul class="big"><li>MySQL 8 with a tuned config</li><li>One-shot migrate service</li><li>Web image: built React app and Express on one port</li><li>FastAPI image, non-root</li><li>Optional Caddy for HTTPS</li></ul></div>
+<div class="card r2"><p class="tag">Reliability</p><h3>Errors and logs</h3><ul class="big"><li>JSON logs with a request ID, passed from Express to FastAPI</li><li>Health checks return 503 if MySQL is down</li><li>Friendly error pages with a reference</li><li>Graceful shutdown on stop</li></ul></div>
+<div class="card r3"><p class="tag">Development</p><h3>Unchanged for coding</h3><ul class="big"><li>Three dev servers: <span class="code">dev:api</span>, <span class="code">dev:analytics</span>, <span class="code">dev:client</span></li><li><span class="code">npm run demo:reset</span> rebuilds the demo data</li><li><span class="code">npm test</span>: 17 Express and 9 FastAPI tests</li></ul></div>
+</div>
+<p class="small muted f1" style="margin-top:40px">Full steps and every environment variable are in DEPLOYMENT.md in the repository.</p>
+<aside>Keep this slide short; it shows the project runs outside a laptop. Docker Compose brings up MySQL, runs the migration once, then starts the web and analytics containers. Migration is safe to repeat: it only loads the schema when the tables are missing. Each service has a health check, and both refuse to start in production with weak secrets. The development setup is unchanged, so the demo can run either way.</aside>
+</section>
+<section id="demo">
+<h2>Live demonstration scenarios</h2>
+<div class="grid3" style="flex:1;grid-template-rows:1fr 1fr 1fr">
+<div class="card r1"><p class="tag">1 · Organizer</p><h3>Dashboard</h3><p class="small">Real figures from FastAPI, filtered by festival and dates</p></div>
+<div class="card r1"><p class="tag">2 · Can, Deniz</p><h3>Buy a ticket</h3><p class="small">Checkout hold, a declined card, limits and age (rules 1, 3, 4, 12)</p></div>
+<div class="card r1"><p class="tag">3 · Elif, Ayse</p><h3>Transfer</h3><p class="small">One transfer, new QR, a second attempt refused (rule 5)</p></div>
+<div class="card r2"><p class="tag">4 · Ayse, Can, Elif</p><h3>Refund</h3><p class="small">Quote 90 / 50 / 0 % by days left, refused after check-in (rule 6)</p></div>
+<div class="card r2" style="border-color:#C084FC"><p class="tag">5 · Gate staff</p><h3>Scan QR codes</h3><p class="small">Admit, duplicate, exit and re-entry, refunded and fake codes (rule 8)</p></div>
+<div class="card r2"><p class="tag">6 · Vendor manager</p><h3>Apply for a stall</h3><p class="small">Document checks, pay the fee, cancel (rules 9, 11)</p></div>
+<div class="card r3"><p class="tag">7 · Organizer</p><h3>Review vendors</h3><p class="small">Approve one vendor per stall, two stalls at most (rule 10)</p></div>
+<div class="card r3"><p class="tag">8 · Organizer</p><h3>Lifecycle</h3><p class="small">Status changes and a full cancellation with refunds (rules 2, 7, 12)</p></div>
+<div class="card r3"><p class="tag">9 · Auditor</p><h3>Ledger and users</h3><p class="small">Reconciliation, a ticket's audit trail, staff accounts (rule 13)</p></div>
+</div>
+<aside>Before class: run npm run demo:reset, start the three services, then npm run demo:qr to print fresh gate codes. Every account uses the demo password listed in DEMO_GUIDE.md. Suggested order if time is short: 1, 2, 5 and 8, which together show analytics, purchasing, QR validation and the transactional cancellation. Each refusal on screen names the rule it enforces, so point that out as it happens. If something goes wrong, run the reset again; it takes a few seconds and rebuilds the same demo state.</aside>
+</section>
+<section id="closing" class="statement">
+<p class="kicker r1" style="color:#3B1366">Summary</p>
+<h1 class="r2" style="width:1500px;font-size:88px">Every rule is checked twice: once by the API for a clear message, and once by MySQL so nothing can slip through.</h1>
+<p class="lead r3" style="margin-top:48px;color:#2A1048">Thank you. Questions?</p>
+<aside>Close with the main idea: FestPass is a full system, but its core is the database design. Constraints, triggers, views and row-level locking keep the 13 business rules true under concurrency, and the API and the analytics service are built on top of that. Then invite questions; good backup slides are the ER diagram and the two rule tables.</aside>
+</section>
+<p class="hint">← → or click to move · F for full screen · print to PDF works</p>
+<script>
+const S=[...document.querySelectorAll('body > section')];let i=Math.max(0,Math.min(S.length-1,(parseInt(location.hash.slice(1))||1)-1));
+function fit(){const k=Math.min(innerWidth/1920,innerHeight/1080);S.forEach(s=>s.style.transform='translate(-50%,-50%) scale('+k+')');}
+function show(n){i=Math.max(0,Math.min(S.length-1,n));S.forEach((s,j)=>s.classList.toggle('on',j===i));history.replaceState(null,'','#'+(i+1));}
+addEventListener('keydown',e=>{if(['ArrowRight','PageDown',' ','Enter'].includes(e.key))show(i+1);if(['ArrowLeft','PageUp','Backspace'].includes(e.key))show(i-1);if(e.key==='Home')show(0);if(e.key==='End')show(S.length-1);if(e.key==='f')document.documentElement.requestFullscreen?.();});
+addEventListener('click',e=>show(e.clientX>innerWidth/3?i+1:i-1));addEventListener('resize',fit);fit();show(i);
+</script>
+</body></html>

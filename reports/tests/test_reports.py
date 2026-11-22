@@ -80,3 +80,42 @@ def test_ticket_trail(tokens):
         t = db.fetch_one(conn, "SELECT ticket_id FROM TicketTransfers LIMIT 1")
     r = client.get(f"/analytics/tickets/{t['ticket_id']}/trail", headers=h(tokens["auditor"])).json()
     assert r["transfers"] and r["ticket"]["buyer_name"]
+
+
+def test_dashboard_sections_match_the_database(tokens):
+    d = client.get("/analytics/dashboard", headers=h(tokens["auditor"])).json()
+    with db.connection() as conn:
+        sold = db.fetch_one(conn, """SELECT COUNT(*) AS n FROM Tickets tk JOIN Orders o ON o.order_id = tk.order_id
+                                      WHERE o.status = 'PAID' AND tk.status IN ('VALID','CHECKED_IN')""")["n"]
+        quota = db.fetch_one(conn, """SELECT COALESCE(SUM(a.remaining), 0) AS n FROM v_tier_availability a
+                                       JOIN Festivals f ON f.festival_id = a.festival_id WHERE f.status IN ('ON_SALE','LIVE','DRAFT')""")["n"]
+        entries = db.fetch_one(conn, "SELECT COUNT(*) AS n FROM GateScans WHERE direction = 'IN' AND result = 'ACCEPTED'")["n"]
+        apps = db.fetch_one(conn, "SELECT COUNT(*) AS n FROM StallAllocations")["n"]
+        money = db.fetch_one(conn, """SELECT SUM(CASE WHEN payment_type='CHARGE' THEN amount ELSE -amount END) AS net
+                                       FROM Payments WHERE status = 'CAPTURED'""")["net"]
+    assert d["tickets"]["sold"] == sold == d["totals"]["tickets_sold"]
+    assert d["tickets"]["remaining"] == int(quota)
+    assert d["gate"]["entries"] == entries
+    assert d["vendors"]["total_applications"] == apps
+    assert abs(d["revenue"]["net"] - float(money)) < 0.01
+    assert d["sales"][-1]["cumulative_tickets"] == sold  # the sales graph adds up to tickets sold
+    days = [r["day"] for r in d["sales"]]
+    assert days == sorted(days) and len(days) == len(set(days))  # one row per day, gaps filled
+
+
+def test_dashboard_filters(tokens):
+    with db.connection() as conn:
+        f = db.fetch_one(conn, "SELECT festival_id FROM Festivals WHERE name = 'Bosphorus Beats'")
+        sold = db.fetch_one(conn, "SELECT tickets_sold FROM v_festival_stats WHERE festival_id = %s", (f["festival_id"],))["tickets_sold"]
+    fid = f["festival_id"]
+    one = client.get(f"/analytics/dashboard?festival_id={fid}", headers=h(tokens["organizer"])).json()
+    assert [x["festival_id"] for x in one["festivals"]] == [fid]
+    assert one["tickets"]["sold"] == sold and one["filters"]["festival_id"] == fid
+    # date range: only the chosen days appear in the series, and nothing is counted outside them
+    r = client.get("/analytics/dashboard?from=2000-01-01&to=2000-01-03", headers=h(tokens["auditor"])).json()
+    assert [x["day"] for x in r["sales"]] == ["2000-01-01", "2000-01-02", "2000-01-03"]
+    assert r["tickets"]["sold"] == 0 and r["revenue"]["gross"] == 0 and r["gate"]["entries"] == 0
+    # someone else's festival, a reversed range and a malformed date are refused
+    assert client.get(f"/analytics/dashboard?festival_id={fid}", headers=h(tokens["organizer2"])).status_code == 403
+    assert client.get("/analytics/dashboard?from=2026-02-01&to=2026-01-01", headers=h(tokens["auditor"])).status_code == 400
+    assert client.get("/analytics/dashboard?from=yesterday", headers=h(tokens["auditor"])).status_code == 422

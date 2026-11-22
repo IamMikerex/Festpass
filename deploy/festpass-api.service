@@ -1,0 +1,24 @@
+# /etc/systemd/system/festpass-api.service  (bare-metal option, see DEPLOYMENT.md)
+[Unit]
+Description=FestPass API (Express + built React app)
+After=network.target mysql.service
+Wants=mysql.service
+
+[Service]
+Type=simple
+User=festpass
+WorkingDirectory=/opt/festpass/server
+EnvironmentFile=/etc/festpass/api.env
+ExecStart=/usr/bin/node src/index.js
+Restart=on-failure
+RestartSec=3
+# SIGTERM triggers a graceful shutdown (in-flight requests finish, DB pool closes)
+KillSignal=SIGTERM
+TimeoutStopSec=15
+NoNewPrivileges=true
+ProtectSystem=strict
+ProtectHome=true
+PrivateTmp=true
+
+[Install]
+WantedBy=multi-user.target

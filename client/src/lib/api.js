@@ -19,20 +19,28 @@ export const setUnauthorizedHandler = (fn) => { onUnauthorized = fn; };
 
 async function request(base, method, path, body) {
   const token = tokenStore.get();
-  const res = await fetch(base + path, {
-    method,
-    headers: {
-      ...(body !== undefined ? { 'Content-Type': 'application/json' } : {}),
-      ...(token ? { Authorization: `Bearer ${token}` } : {}),
-    },
-    body: body !== undefined ? JSON.stringify(body) : undefined,
-  });
+  let res;
+  try {
+    res = await fetch(base + path, {
+      method,
+      headers: {
+        ...(body !== undefined ? { 'Content-Type': 'application/json' } : {}),
+        ...(token ? { Authorization: `Bearer ${token}` } : {}),
+      },
+      body: body !== undefined ? JSON.stringify(body) : undefined,
+    });
+  } catch {
+    throw new ApiError(0, 'Cannot reach FestPass. Check your connection and try again.');
+  }
   const text = await res.text();
   let data = null;
   try { data = text ? JSON.parse(text) : null; } catch { data = text; }
   if (!res.ok) {
     if (res.status === 401 && token) onUnauthorized();
-    const msg = (data && (data.error || (typeof data.detail === 'string' ? data.detail : null))) || `Request failed (${res.status})`;
+    let msg = (data && (data.error || (typeof data.detail === 'string' ? data.detail : null))) || null;
+    if (!msg && res.status >= 502) msg = 'The service is temporarily unavailable. Please try again in a moment.';
+    if (!msg) msg = `Request failed (${res.status})`;
+    if (data && data.request_id && res.status >= 500) msg += ` (reference ${data.request_id.slice(0, 8)})`;
     throw new ApiError(res.status, msg, data && data.details);
   }
   return data;

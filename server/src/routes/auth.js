@@ -9,7 +9,9 @@ const { badRequest, unauthorized, conflict } = require('../utils/errors');
 
 const router = express.Router();
 
-const loginLimiter = rateLimit({ windowMs: 15 * 60 * 1000, limit: 30, standardHeaders: true, legacyHeaders: false,
+// Brute-force protection: 30 failed sign-ins per 15 minutes per IP. Successful sign-ins are not
+// counted, so switching between demo accounts never locks anyone out.
+const loginLimiter = rateLimit({ windowMs: 15 * 60 * 1000, limit: 30, skipSuccessfulRequests: true, standardHeaders: true, legacyHeaders: false,
   message: { error: 'Too many sign-in attempts, try again in a few minutes' } });
 
 const password = z.string().min(8, 'Password must be at least 8 characters').max(72)

@@ -1,0 +1,33 @@
+# MySQL 8.0 settings for a FestPass production server.
+# Docker: mounted into /etc/mysql/conf.d/ by docker-compose.prod.yml.
+# Bare metal: copy to /etc/mysql/mysql.conf.d/festpass.cnf and restart mysqld.
+[mysqld]
+character-set-server = utf8mb4
+collation-server     = utf8mb4_0900_ai_ci
+# Festival local time: NOW()/CURDATE() in triggers, views and jobs (rules 3, 5, 6, 11, 12)
+default-time-zone    = '+03:00'
+# The schema defines triggers; needed when binary logging is on and the migration user is not SUPER
+log_bin_trust_function_creators = 1
+
+# Integrity: InnoDB everywhere, row locks for the concurrency rules (Part 3 d)
+default-storage-engine = InnoDB
+transaction-isolation  = REPEATABLE-READ
+innodb_flush_log_at_trx_commit = 1
+sync_binlog = 1
+innodb_lock_wait_timeout = 20
+
+# Sizing for a small VPS (2 GB RAM); raise innodb_buffer_pool_size to ~60 % of RAM on a dedicated server
+innodb_buffer_pool_size = 512M
+max_connections = 200
+
+# Security
+skip-name-resolve
+local_infile = 0
+
+# Observability
+slow_query_log = 1
+long_query_time = 1
+log_error_verbosity = 2
+
+# Point-in-time recovery: keep 7 days of binary logs
+binlog_expire_logs_seconds = 604800

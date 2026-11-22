@@ -9,8 +9,8 @@ export default function StallMap({ stalls, selected, onPick, mineIds = [], showV
     <div>
       <div className="legend mb-2">
         <span><i />Available</span>
-        <span><i style={{ background: 'repeating-linear-gradient(-45deg,#f6f5fb,#f6f5fb 3px,#e5e2f0 3px,#e5e2f0 6px)' }} />Allocated</span>
-        <span><i style={{ borderColor: 'var(--success)', background: 'var(--success-50)' }} />Yours</span>
+        <span><i className="taken" />Allocated</span>
+        <span><i className="mine" />Yours</span>
         <span><Zap size={12} style={{ verticalAlign: -2 }} /> Power supply</span>
       </div>
       {ZONES.map((z) => {

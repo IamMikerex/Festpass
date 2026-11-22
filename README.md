@@ -64,6 +64,8 @@ Open **http://localhost:5173**. Vite proxies `/api` and `/analytics` to the two 
 
 **Production-style single port:** `npm run build` then `npm start` serves the built React app from Express on port 4000 and forwards `/analytics/*` to FastAPI (`ANALYTICS_URL`).
 
+**Deploying to a server:** `docker compose -f docker-compose.prod.yml --env-file .env.production up -d --build` runs MySQL, the API (with the React build) and FastAPI with production settings, least-privilege database accounts, JSON logs and health checks, plus optional automatic HTTPS. See **[DEPLOYMENT.md](DEPLOYMENT.md)** for the full guide, a bare-metal option (systemd + nginx) and every environment variable.
+
 ### 5. Demo accounts
 Every seeded account uses the password **`Password123!`** (the sign‑in page has one‑click buttons).
 
@@ -81,17 +83,38 @@ Every seeded account uses the password **`Password123!`** (the sign‑in page ha
 
 Seed dates are relative to the day you run `db:init`, so there is always a live festival (gate demo), one 5 days out (no refund band), one 15 days out (50% band), one 45 days out (90% band), a draft and a completed one. Re‑run `npm run db:init` to reset.
 
-To scan without a camera: as an attendee open **Show QR**, or copy a ticket's `qr_token` from the database, and paste it into the scanner's manual field.
+### Presenting the system (demo mode)
+
+```bash
+npm run demo:reset   # base data + demo scenarios played through the real API (run it on the day you present)
+npm run demo:qr      # real QR codes for each gate outcome: admit, duplicate, re-entry, refunded, void, wrong festival
+```
+
+`demo:reset` adds a cancelled festival, tickets in every status (VALID, CHECKED_IN, REFUNDED, VOID), a declined card payment, refunds in each band, transfers, stall applications in every stage, a blacklisted vendor and refused gate scans. Every step goes through the API as the user who would do it, so no business rule is bypassed. **[DEMO_GUIDE.md](DEMO_GUIDE.md)** has the accounts, the data and a click-by-click script for each feature.
+
+To scan without a camera: paste a code from `npm run demo:qr` into the scanner's code box, or open an attendee's **Show QR** on a phone and use the scanner's camera.
+
+The class presentation is in [`docs/presentation/`](docs/presentation): open `FestPass-presentation.html` in a browser to present (arrow keys or click, F for full screen), use `FestPass-presentation.pdf` as a handout, and read `SPEAKER_NOTES.md` for what to say on each slide.
 
 ### 6. Tests
 
 ```bash
-npm test     # 15 Express business-rule tests (re-seeds the DB!) + 7 FastAPI tests
+npm test     # 17 Express business-rule tests (re-seeds the DB!) + 9 FastAPI tests
 ```
 
 The Express suite runs against real MySQL and covers every rule below, including concurrency (8 parallel buyers for the last ticket; the same QR at two gates at once).
 
 ---
+
+## Frontend design
+
+The React client uses a dark, festival-night theme with neon purple, magenta and orange accents (all tokens live at the top of `client/src/styles.css`).
+
+- **Visitors** get an immersive home page: a full-screen hero for the next festival with a live countdown, poster-style festival cards, on-site zones and a vendor call-to-action.
+- **Signed-in fans, organizers, auditors and vendors** get a sidebar grouped into sections, with the main action pinned at the top (Find tickets, New festival, Apply for a stall). On phones the sidebar becomes a drawer and a bottom tab bar appears.
+- **Gate staff** get a minimal one-column scanner with large Entry/Exit buttons and a full-width ADMIT/REFUSE result.
+
+Festival imagery: the database stores no images, so each festival shows generated poster art (stage lights, lasers, crowd silhouette) with an event photo from Unsplash fading in on top. Photo IDs are in `client/src/lib/media.js`; swap them for your own photography, or set `VITE_REMOTE_PHOTOS=false` in `client/.env` to use only the generated art (for example offline).
 
 ## Business rules → where they are enforced
 
@@ -143,7 +166,7 @@ All routes are JSON. Send `Authorization: Bearer <token>` from `/api/auth/login`
 
 **FastAPI, `/analytics`** (ORGANIZER sees own festivals, AUDITOR sees all; interactive docs at `/analytics/docs`)
 
-`GET /dashboard`, `GET /festivals/{id}/report`, `GET /festivals/{id}/attendees`, `GET /payments`, `GET /reconciliation`, `GET /transfers`, `GET /scans`, `GET /tickets/{id}/trail`. Add `?format=csv` to attendees, payments, transfers and scans for a CSV download.
+`GET /dashboard` (optional `festival_id`, `from`, `to`), `GET /festivals/{id}/report`, `GET /festivals/{id}/attendees`, `GET /payments`, `GET /reconciliation`, `GET /transfers`, `GET /scans`, `GET /tickets/{id}/trail`. Add `?format=csv` to attendees, payments, transfers and scans for a CSV download.
 
 ### Payments
 The gateway is simulated (`server/src/services/gateway.js`): every method captures instantly, except a card number ending in **0002**, which is declined and recorded as a FAILED payment. Each charge and refund is its own `Payments` row with a unique `provider_ref`. To plug in a real PSP, replace `gateway.charge/refund` and point its webhook at `POST /api/payments/webhook`.

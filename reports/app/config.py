@@ -18,6 +18,18 @@ class Settings:
     db_timezone = os.getenv("DB_TIMEZONE", "+03:00")
     jwt_secret = os.getenv("JWT_SECRET", "dev-only-change-me")
     cors_origin = [o.strip() for o in os.getenv("CORS_ORIGIN", "http://localhost:5173").split(",")]
+    env = os.getenv("APP_ENV", os.getenv("NODE_ENV", "development"))
+    log_json = os.getenv("LOG_FORMAT", "json" if env == "production" else "text") == "json"
+    log_level = os.getenv("LOG_LEVEL", "INFO").upper()
+    docs_enabled = os.getenv("ANALYTICS_DOCS", "true") != "false"
 
 
 settings = Settings()
+
+def validate():
+    """Exit with a clear message when production runs with development secrets."""
+    if settings.env != "production":
+        return
+    secret = settings.jwt_secret.lower()
+    if len(secret) < 32 or "change-me" in secret or "dev-only" in secret:
+        raise SystemExit("Invalid production configuration: JWT_SECRET must be the same long random secret as the Express API")

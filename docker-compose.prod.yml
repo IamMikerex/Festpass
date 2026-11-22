@@ -1,0 +1,114 @@
+# FestPass production stack: MySQL + Express (serving the React build) + FastAPI.
+#   cp .env.production.example .env.production   # fill in the secrets
+#   docker compose -f docker-compose.prod.yml --env-file .env.production up -d --build
+# Optional automatic HTTPS (Caddy + Let's Encrypt): add --profile https and set DOMAIN.
+# See DEPLOYMENT.md. The development setup (docker-compose.yml, npm run dev:*) is unchanged.
+name: festpass
+
+x-db: &db
+  DB_HOST: mysql
+  DB_PORT: "3306"
+  DB_NAME: festpass
+  DB_TIMEZONE: ${DB_TIMEZONE:-+03:00}
+
+services:
+  mysql:
+    image: mysql:8.0
+    restart: unless-stopped
+    environment:
+      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD:?set MYSQL_ROOT_PASSWORD}
+      DB_MIGRATE_PASSWORD: ${DB_MIGRATE_PASSWORD:?set DB_MIGRATE_PASSWORD}
+      DB_APP_PASSWORD: ${DB_APP_PASSWORD:?set DB_APP_PASSWORD}
+      DB_ANALYTICS_PASSWORD: ${DB_ANALYTICS_PASSWORD:?set DB_ANALYTICS_PASSWORD}
+      TZ: Europe/Istanbul
+    volumes:
+      - mysql-data:/var/lib/mysql
+      - ./database/mysql/production.cnf:/etc/mysql/conf.d/festpass.cnf:ro
+      - ./database/mysql/init-users.sh:/docker-entrypoint-initdb.d/10-users.sh:ro
+    healthcheck:
+      test: ["CMD-SHELL", "mysqladmin ping -h 127.0.0.1 -uroot -p\"$$MYSQL_ROOT_PASSWORD\" --silent"]
+      interval: 5s
+      timeout: 5s
+      retries: 30
+      start_period: 30s
+    # Not published: only the other containers reach MySQL.
+
+  # One-shot: creates the schema on an empty database (never drops data). SEED_DEMO=true also loads demo data.
+  migrate:
+    build: .
+    image: festpass-web:latest
+    command: ["node", "scripts/migrate.js"]
+    environment:
+      <<: *db
+      NODE_ENV: production
+      DB_USER: festpass_migrate
+      DB_PASSWORD: ${DB_MIGRATE_PASSWORD}
+      SEED_DEMO: ${SEED_DEMO:-false}
+      JWT_SECRET: ${JWT_SECRET:?set JWT_SECRET}
+      PAYMENT_WEBHOOK_SECRET: ${PAYMENT_WEBHOOK_SECRET:?set PAYMENT_WEBHOOK_SECRET}
+      CORS_ORIGIN: ${PUBLIC_URL:?set PUBLIC_URL}
+    depends_on:
+      mysql: { condition: service_healthy }
+    restart: "no"
+
+  api:
+    image: festpass-web:latest
+    restart: unless-stopped
+    environment:
+      <<: *db
+      NODE_ENV: production
+      PORT: "4000"
+      DB_USER: festpass_app
+      DB_PASSWORD: ${DB_APP_PASSWORD}
+      DB_CONNECTION_LIMIT: ${DB_CONNECTION_LIMIT:-15}
+      JWT_SECRET: ${JWT_SECRET}
+      JWT_EXPIRES_IN: ${JWT_EXPIRES_IN:-8h}
+      PAYMENT_WEBHOOK_SECRET: ${PAYMENT_WEBHOOK_SECRET}
+      CORS_ORIGIN: ${PUBLIC_URL}
+      ANALYTICS_URL: http://analytics:8000
+      JOBS_ENABLED: "true"
+      JOBS_INTERVAL_MS: ${JOBS_INTERVAL_MS:-30000}
+      LOG_LEVEL: ${LOG_LEVEL:-info}
+    ports:
+      - "${HTTP_BIND:-127.0.0.1}:${HTTP_PORT:-8080}:4000"
+    depends_on:
+      migrate: { condition: service_completed_successfully }
+      analytics: { condition: service_started }
+
+  analytics:
+    build: ./reports
+    image: festpass-analytics:latest
+    restart: unless-stopped
+    environment:
+      <<: *db
+      APP_ENV: production
+      DB_USER: festpass_analytics
+      DB_PASSWORD: ${DB_ANALYTICS_PASSWORD}
+      JWT_SECRET: ${JWT_SECRET}
+      CORS_ORIGIN: ${PUBLIC_URL}
+      WEB_CONCURRENCY: ${ANALYTICS_WORKERS:-2}
+      ANALYTICS_DOCS: ${ANALYTICS_DOCS:-true}
+      LOG_LEVEL: ${LOG_LEVEL:-info}
+    depends_on:
+      migrate: { condition: service_completed_successfully }
+    # Not published: the API forwards /analytics/* to it.
+
+  # Optional HTTPS front door: docker compose ... --profile https up -d
+  caddy:
+    image: caddy:2
+    profiles: ["https"]
+    restart: unless-stopped
+    environment:
+      DOMAIN: ${DOMAIN:-localhost}
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./deploy/Caddyfile:/etc/caddy/Caddyfile:ro
+      - caddy-data:/data
+    depends_on:
+      - api
+
+volumes:
+  mysql-data:
+  caddy-data:

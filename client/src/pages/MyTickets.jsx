@@ -3,6 +3,7 @@ import { Link } from 'react-router-dom';
 import { QRCodeSVG } from 'qrcode.react';
 import { CalendarDays, MapPin, QrCode, Send, Undo2, History, Ticket, User, Sun, Moon } from 'lucide-react';
 import { api } from '../lib/api';
+import FestivalArt from '../components/FestivalArt';
 import { useFetch } from '../lib/useFetch';
 import { useAuth } from '../lib/auth';
 import { Alert, Badge, Empty, ErrorState, Field, Loading, Modal, useToast } from '../components/ui';
@@ -126,11 +127,11 @@ function TicketCard({ t, me, onAction }) {
   const inside = t.last_scan_direction === 'IN';
   return (
     <div className={`ticket ${active ? '' : 'dim'}`}>
-      <div className="ticket-band" />
+      <div className="ticket-art"><FestivalArt id={t.festival_id} name={t.festival_name} w={500} /></div>
       <div className="ticket-main">
         <div className="row-between">
           <div className="row"><Badge value={t.status} />{t.festival_status !== 'ON_SALE' && <Badge value={t.festival_status} />}{inside && <Badge tone="blue">Inside now</Badge>}</div>
-          <span className="tier-price" style={{ fontSize: 16 }}>{t.tier_name}</span>
+          <span className="badge purple plain">{t.tier_name}</span>
         </div>
         <h3><Link to={`/festivals/${t.festival_id}`} style={{ color: 'inherit' }}>{t.festival_name}</Link></h3>
         <div className="ticket-meta">
@@ -177,7 +178,7 @@ export default function MyTickets() {
   return (
     <>
       <div className="page-head">
-        <div><h1>My tickets</h1><p>Named tickets you hold. Tap a QR code at the gate.</p></div>
+        <div><span className="eyebrow">Wallet</span><h1 className="mt-1">My tickets</h1><p>Named tickets you hold. Open a QR code at the gate, or transfer, refund and check history right from each ticket.</p></div>
         <div className="segmented">
           <button className={tab === 'upcoming' ? 'on' : ''} onClick={() => setTab('upcoming')}>Upcoming ({upcoming.length})</button>
           <button className={tab === 'past' ? 'on' : ''} onClick={() => setTab('past')}>Past & refunded ({other.length})</button>
