@@ -57,13 +57,21 @@ export default function VendorHome() {
   const t = today();
   return (
     <>
-      <div className="page-head">
-        <div><h1>My businesses</h1><p>Register each food truck, bar or brand you manage, then apply for stalls.</p></div>
-        <div className="row">
-          <Link to="/vendor/stalls" className="btn btn-outline"><MapPinned size={16} />Find a stall</Link>
-          <button className="btn btn-primary" onClick={() => setEdit({})}><Plus size={16} />Register business</button>
+      <section className="portal-hero">
+        <div className="row-between" style={{ alignItems: 'flex-end' }}>
+          <div><span className="eyebrow">Vendor portal</span><h1 className="mt-1">My businesses</h1><p className="muted mt-1">Register each food truck, bar or brand you manage, then apply for stalls.</p></div>
+          <div className="row">
+            <Link to="/vendor/stalls" className="btn btn-outline"><MapPinned size={16} />Find a stall</Link>
+            <button className="btn btn-grad" onClick={() => setEdit({})}><Plus size={16} />Register business</button>
+          </div>
         </div>
-      </div>
+        <div className="portal-steps">
+          <div><b>1</b>Register your business</div>
+          <div><b>2</b>Organizer verifies permits</div>
+          <div><b>3</b>Apply for a stall on the map</div>
+          <div><b>4</b>Pay the fee within 7 days</div>
+        </div>
+      </section>
       {data.vendors.length === 0 ? (
         <div className="card"><Empty icon={Store} title="No businesses yet" action={<button className="btn btn-primary" onClick={() => setEdit({})}><Plus size={16} />Register business</button>}>
           Add your company with its tax number and permit expiry dates.

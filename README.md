@@ -93,6 +93,16 @@ The Express suite runs against real MySQL and covers every rule below, including
 
 ---
 
+## Frontend design
+
+The React client uses a dark, festival-night theme with neon purple, magenta and orange accents (all tokens live at the top of `client/src/styles.css`).
+
+- **Visitors** get an immersive home page: a full-screen hero for the next festival with a live countdown, poster-style festival cards, on-site zones and a vendor call-to-action.
+- **Signed-in fans, organizers, auditors and vendors** get a sidebar grouped into sections, with the main action pinned at the top (Find tickets, New festival, Apply for a stall). On phones the sidebar becomes a drawer and a bottom tab bar appears.
+- **Gate staff** get a minimal one-column scanner with large Entry/Exit buttons and a full-width ADMIT/REFUSE result.
+
+Festival imagery: the database stores no images, so each festival shows generated poster art (stage lights, lasers, crowd silhouette) with an event photo from Unsplash fading in on top. Photo IDs are in `client/src/lib/media.js`; swap them for your own photography, or set `VITE_REMOTE_PHOTOS=false` in `client/.env` to use only the generated art (for example offline).
+
 ## Business rules → where they are enforced
 
 | # | Rule | Database | API |

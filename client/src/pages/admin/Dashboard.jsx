@@ -1,3 +1,4 @@
+import { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { Ticket, Wallet, Undo2, ScanLine, Store, CalendarDays, Repeat, AlertCircle, ArrowRight } from 'lucide-react';
 import { analytics } from '../../lib/api';
@@ -10,19 +11,22 @@ import { dateRange, dateTime, label, money, moneyCompact, num, pct } from '../..
 export default function Dashboard() {
   const { user } = useAuth();
   const { data, loading, error, reload } = useFetch(() => analytics.get('/dashboard'), []);
+  const [scope, setScope] = useState('active');
   if (loading) return <Loading label="Crunching numbers…" />;
   if (error) return <ErrorState error={error} onRetry={reload} />;
   const t = data.totals;
+  const ACTIVE = ['LIVE', 'ON_SALE', 'DRAFT'];
+  const festRows = data.festivals.filter((f) => scope === 'all' || (scope === 'active' ? ACTIVE.includes(f.status) : !ACTIVE.includes(f.status)));
   return (
     <>
       <div className="page-head">
-        <div><h1>{user.role === 'AUDITOR' ? 'Finance overview' : `Welcome back, ${user.full_name.split(' ')[0]}`}</h1>
+        <div><span className="eyebrow">{user.role === 'AUDITOR' ? 'Auditor' : 'Organizer'} dashboard</span><h1 className="mt-1">{user.role === 'AUDITOR' ? 'Finance overview' : `Welcome back, ${user.full_name.split(' ')[0]}`}</h1>
           <p>{user.role === 'AUDITOR' ? 'Read-only view across every festival.' : `${t.festivals} festivals · ${t.live} live · ${t.on_sale} on sale`}</p></div>
         {user.role === 'ORGANIZER' && <Link to="/admin/festivals?new=1" className="btn btn-primary"><CalendarDays size={16} />New festival</Link>}
       </div>
 
       {user.role === 'ORGANIZER' && (t.pending_applications > 0 || t.pending_vendors > 0) && (
-        <div className="card card-pad mb-2 row-between" style={{ borderColor: '#fcd9a8', background: 'var(--warning-50)' }}>
+        <div className="card callout card-pad mb-2 row-between">
           <div className="row"><AlertCircle size={18} color="var(--warning)" /><span><b>Needs your review:</b> {t.pending_applications} stall application(s) and {t.pending_vendors} new vendor(s).</span></div>
           <Link to="/admin/vendors" className="btn btn-outline btn-sm">Review <ArrowRight size={14} /></Link>
         </div>
@@ -48,10 +52,17 @@ export default function Dashboard() {
 
       <div className="grid grid-3">
         <div className="card span-2">
-          <div className="card-head"><h3>Festivals</h3><Link to="/admin/festivals" className="btn btn-ghost btn-sm">Manage <ArrowRight size={14} /></Link></div>
+          <div className="card-head"><h3>Festivals</h3>
+            <div className="row">
+              <div className="segmented" role="group" aria-label="Filter festivals">
+                {[['active', 'Active'], ['past', 'Past & cancelled'], ['all', 'All']].map(([k, l]) => <button key={k} className={scope === k ? 'on' : ''} aria-pressed={scope === k} onClick={() => setScope(k)}>{l}</button>)}
+              </div>
+              <Link to="/admin/festivals" className="btn btn-ghost btn-sm">Manage <ArrowRight size={14} /></Link>
+            </div>
+          </div>
           <div className="table-wrap"><table className="table">
             <thead><tr><th>Festival</th><th>Status</th><th>Sold</th><th className="num">Revenue</th><th className="num">Checked in</th></tr></thead>
-            <tbody>{data.festivals.map((f) => (
+            <tbody>{festRows.length === 0 && <tr><td colSpan={5} className="muted small center">No festivals in this view.</td></tr>}{festRows.map((f) => (
               <tr key={f.festival_id}>
                 <td><Link to={`/admin/festivals/${f.festival_id}`} className="bold">{f.name}</Link><div className="tiny muted">{dateRange(f.start_date, f.end_date)}</div></td>
                 <td><Badge value={f.status} /></td>
