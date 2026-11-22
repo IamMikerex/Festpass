@@ -81,7 +81,16 @@ Every seeded account uses the password **`Password123!`** (the sign‑in page ha
 
 Seed dates are relative to the day you run `db:init`, so there is always a live festival (gate demo), one 5 days out (no refund band), one 15 days out (50% band), one 45 days out (90% band), a draft and a completed one. Re‑run `npm run db:init` to reset.
 
-To scan without a camera: as an attendee open **Show QR**, or copy a ticket's `qr_token` from the database, and paste it into the scanner's manual field.
+### Presenting the system (demo mode)
+
+```bash
+npm run demo:reset   # base data + demo scenarios played through the real API (run it on the day you present)
+npm run demo:qr      # real QR codes for each gate outcome: admit, duplicate, re-entry, refunded, void, wrong festival
+```
+
+`demo:reset` adds a cancelled festival, tickets in every status (VALID, CHECKED_IN, REFUNDED, VOID), a declined card payment, refunds in each band, transfers, stall applications in every stage, a blacklisted vendor and refused gate scans. Every step goes through the API as the user who would do it, so no business rule is bypassed. **[DEMO_GUIDE.md](DEMO_GUIDE.md)** has the accounts, the data and a click-by-click script for each feature.
+
+To scan without a camera: paste a code from `npm run demo:qr` into the scanner's code box, or open an attendee's **Show QR** on a phone and use the scanner's camera.
 
 ### 6. Tests
 

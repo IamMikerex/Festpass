@@ -9,9 +9,13 @@
     "dev": "node --watch src/index.js",
     "db:init": "node scripts/initDb.js",
     "db:schema": "node scripts/initDb.js --schema-only",
-    "test": "node --test --test-concurrency=1 tests/*.test.js"
+    "test": "node --test --test-concurrency=1 tests/*.test.js",
+    "demo:reset": "node scripts/initDb.js && node scripts/demoScenarios.js",
+    "demo:qr": "node scripts/demoQr.js"
   },
-  "engines": { "node": ">=18" },
+  "engines": {
+    "node": ">=18"
+  },
   "dependencies": {
     "bcryptjs": "2.4.3",
     "cors": "2.8.5",
