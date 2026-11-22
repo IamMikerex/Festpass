@@ -3,6 +3,8 @@ import { Link, useLocation, useNavigate, useSearchParams } from 'react-router-do
 import { Mail, Lock, Ticket, Store } from 'lucide-react';
 import { useAuth, HOME_BY_ROLE } from '../lib/auth';
 import { Alert, Field } from '../components/ui';
+import FestivalArt from '../components/FestivalArt';
+import { scenePhoto } from '../lib/media';
 
 const DEMO = [
   { email: 'ayse@festpass.com', role: 'Attendee', name: 'Ayse' },
@@ -13,9 +15,10 @@ const DEMO = [
   { email: 'can@festpass.com', role: 'Attendee', name: 'Can' },
 ];
 
-function AuthArt({ title, text }) {
+function AuthArt({ title, text, art = 1, scene = 'crowd' }) {
   return (
     <div className="auth-art">
+      <FestivalArt id={art} name={title} photo={scenePhoto(scene, 1200)} eager />
       <span className="chip"><Ticket size={13} /> FestPass</span>
       <h2 className="mt-2">{title}</h2>
       <p>{text}</p>
@@ -50,7 +53,7 @@ export function Login() {
           {error && <Alert kind="error">{error}</Alert>}
           <Field label="Email"><div className="input-icon"><Mail size={16} /><input className="input" type="email" autoComplete="email" required value={email} onChange={(e) => setEmail(e.target.value)} /></div></Field>
           <Field label="Password"><div className="input-icon"><Lock size={16} /><input className="input" type="password" autoComplete="current-password" required value={password} onChange={(e) => setPassword(e.target.value)} /></div></Field>
-          <button className="btn btn-primary btn-lg" disabled={busy}>{busy ? 'Signing in…' : 'Sign in'}</button>
+          <button className="btn btn-grad btn-lg" disabled={busy}>{busy ? 'Signing in…' : 'Sign in'}</button>
           <div className="divider" />
           <div>
             <p className="small bold mb-1">Demo accounts <span className="muted" style={{ fontWeight: 400 }}>(password Password123!)</span></p>
@@ -88,7 +91,7 @@ export function Register() {
 
   return (
     <div className="auth-wrap card" style={{ overflow: 'hidden', minHeight: 640 }}>
-      <AuthArt title="One account for every festival." text="Fans buy and manage named tickets. Vendors register their business and apply for stalls. Staff accounts are created by organizers." />
+      <AuthArt art={4} scene="dj" title="One account for every festival." text="Fans buy and manage named tickets. Vendors register their business and apply for stalls. Staff accounts are created by organizers." />
       <div className="auth-form">
         <form className="auth-card stack" onSubmit={submit}>
           <div><h1>Create account</h1><p className="muted mt-1">Already registered? <Link to="/login">Sign in</Link></p></div>
@@ -104,7 +107,7 @@ export function Register() {
             <Field label="Phone (optional)"><input className="input" type="tel" placeholder="+90 5xx xxx xx xx" value={form.phone} onChange={set('phone')} /></Field>
           </div>
           <Field label="Password" hint="At least 8 characters with a letter and a number"><input className="input" type="password" autoComplete="new-password" required value={form.password} onChange={set('password')} /></Field>
-          <button className="btn btn-primary btn-lg" disabled={busy}>{busy ? 'Creating…' : 'Create account'}</button>
+          <button className="btn btn-grad btn-lg" disabled={busy}>{busy ? 'Creating…' : 'Create account'}</button>
         </form>
       </div>
     </div>

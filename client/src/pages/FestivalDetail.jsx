@@ -1,6 +1,6 @@
 import { useMemo, useState } from 'react';
 import { Link, useNavigate, useParams } from 'react-router-dom';
-import { MapPin, CalendarDays, Users, ShieldCheck, Repeat, Clock, BadgePercent, Store, UserPlus, Timer } from 'lucide-react';
+import { MapPin, CalendarDays, Users, ShieldCheck, Repeat, Clock, BadgePercent, Store, UserPlus, Timer, ArrowLeft, Ticket } from 'lucide-react';
 import { api } from '../lib/api';
 import { useFetch } from '../lib/useFetch';
 import { useAuth } from '../lib/auth';
@@ -59,24 +59,27 @@ export default function FestivalDetail() {
 
   return (
     <>
-      <div className="detail-hero">
-        <FestivalArt id={f.festival_id} name={f.name} />
+      <section className="detail-hero">
+        <FestivalArt id={f.festival_id} name={f.name} w={2000} eager />
         <div className="overlay" />
-        <div className="content">
-          <div className="row"><Badge value={f.status}>{f.status === 'LIVE' ? 'Live now' : undefined}</Badge><span className="chip">{f.min_age}+ only</span></div>
-          <h1 className="mt-1">{f.name}</h1>
+        <div className="container content">
+          <Link to="/festivals" className="back-link"><ArrowLeft size={15} />All festivals</Link>
+          <div className="row"><Badge value={f.status}>{f.status === 'LIVE' ? 'Live now' : undefined}</Badge><span className="chip">{f.min_age}+ only</span>{canBuy && days >= 0 && <span className="chip"><Clock size={13} />{days === 0 ? 'Starts today' : `${days} days to go`}</span>}</div>
+          <h1 className="mt-2">{f.name}</h1>
           <div className="fest-meta">
-            <span><MapPin size={15} />{f.venue_name}, {f.city}</span>
-            <span><CalendarDays size={15} />{dateRange(f.start_date, f.end_date)}</span>
-            <span><Users size={15} />{num(f.daily_capacity)} per day</span>
+            <span><MapPin size={16} />{f.venue_name}, {f.city}</span>
+            <span><CalendarDays size={16} />{dateRange(f.start_date, f.end_date)}</span>
+            <span><Users size={16} />{num(f.daily_capacity)} per day</span>
           </div>
+          {canBuy && count === 0 && <a href="#tickets" className="btn btn-grad btn-lg mt-3"><Ticket size={18} />Choose tickets</a>}
         </div>
-      </div>
+      </section>
 
+      <div className="container">
       <div className="detail-grid">
         <div className="stack">
-          <div className="card">
-            <div className="card-head"><h2>Tickets</h2>{canBuy && <span className="muted small">Max {Math.min(10, ...tiers.map((t) => t.max_per_order))}–{Math.max(...tiers.map((t) => t.max_per_order), 0)} per order, 10 per festival</span>}</div>
+          <div className="card" id="tickets" style={{ scrollMarginTop: 90 }}>
+            <div className="card-head"><h2><Ticket size={18} />Tickets</h2>{canBuy && <span className="muted small">Max {Math.min(10, ...tiers.map((t) => t.max_per_order))}–{Math.max(...tiers.map((t) => t.max_per_order), 0)} per order, 10 per festival</span>}</div>
             <div className="card-body stack">
               {!canBuy && <Alert kind="warning">{f.status === 'LIVE' ? 'This festival is happening now; online sales are closed.' : `Ticket sales are ${f.status === 'DRAFT' ? 'not open yet' : 'closed'}.`}</Alert>}
               {tiers.map((t) => {
@@ -125,8 +128,8 @@ export default function FestivalDetail() {
           )}
         </div>
 
-        <div className="card sticky">
-          <div className="card-head"><h2>Your order</h2></div>
+        <div className="card sticky order-panel">
+          <div className="card-head"><h2>Your order</h2>{count > 0 && <span className="badge purple plain">{count} ticket{count === 1 ? '' : 's'}</span>}</div>
           <div className="card-body">
             {count === 0 ? <p className="muted small">Pick one or more tickets to continue.</p> : (
               <>
@@ -154,6 +157,7 @@ export default function FestivalDetail() {
             <p className="tiny faint center mt-1">Organised by {f.organizer_name}</p>
           </div>
         </div>
+      </div>
       </div>
     </>
   );
