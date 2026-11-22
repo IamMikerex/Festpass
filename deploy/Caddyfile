@@ -1,0 +1,11 @@
+# Automatic HTTPS for FestPass (Let's Encrypt). DOMAIN must point at this server.
+{$DOMAIN} {
+	encode zstd gzip
+	reverse_proxy api:4000 {
+		header_up X-Request-Id {http.request.uuid}
+	}
+	header {
+		Strict-Transport-Security "max-age=31536000; includeSubDomains"
+		-Server
+	}
+}

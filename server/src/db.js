@@ -8,7 +8,9 @@ const pool = mysql.createPool({
   password: config.db.password,
   database: config.db.database,
   waitForConnections: true,
-  connectionLimit: 15,
+  connectionLimit: config.dbConnectionLimit,
+  connectTimeout: 10000,
+  enableKeepAlive: true,
   dateStrings: true, // DATE/DATETIME come back as strings: no timezone drift
   decimalNumbers: true,
   timezone: config.db.timezone,

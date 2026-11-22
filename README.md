@@ -64,6 +64,8 @@ Open **http://localhost:5173**. Vite proxies `/api` and `/analytics` to the two 
 
 **Production-style single port:** `npm run build` then `npm start` serves the built React app from Express on port 4000 and forwards `/analytics/*` to FastAPI (`ANALYTICS_URL`).
 
+**Deploying to a server:** `docker compose -f docker-compose.prod.yml --env-file .env.production up -d --build` runs MySQL, the API (with the React build) and FastAPI with production settings, least-privilege database accounts, JSON logs and health checks, plus optional automatic HTTPS. See **[DEPLOYMENT.md](DEPLOYMENT.md)** for the full guide, a bare-metal option (systemd + nginx) and every environment variable.
+
 ### 5. Demo accounts
 Every seeded account uses the password **`Password123!`** (the sign‑in page has one‑click buttons).
 
@@ -95,7 +97,7 @@ To scan without a camera: paste a code from `npm run demo:qr` into the scanner's
 ### 6. Tests
 
 ```bash
-npm test     # 15 Express business-rule tests (re-seeds the DB!) + 7 FastAPI tests
+npm test     # 17 Express business-rule tests (re-seeds the DB!) + 9 FastAPI tests
 ```
 
 The Express suite runs against real MySQL and covers every rule below, including concurrency (8 parallel buyers for the last ticket; the same QR at two gates at once).

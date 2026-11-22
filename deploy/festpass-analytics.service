@@ -1,0 +1,23 @@
+# /etc/systemd/system/festpass-analytics.service  (bare-metal option, see DEPLOYMENT.md)
+[Unit]
+Description=FestPass analytics (FastAPI)
+After=network.target mysql.service
+Wants=mysql.service
+
+[Service]
+Type=simple
+User=festpass
+WorkingDirectory=/opt/festpass/reports
+EnvironmentFile=/etc/festpass/analytics.env
+# Refuse to start with development secrets, then run 2 workers bound to localhost only
+ExecStartPre=/opt/festpass/reports/.venv/bin/python -c "from app.config import validate; validate()"
+ExecStart=/opt/festpass/reports/.venv/bin/uvicorn app.main:app --host 127.0.0.1 --port 8000 --workers 2 --proxy-headers --no-access-log
+Restart=on-failure
+RestartSec=3
+NoNewPrivileges=true
+ProtectSystem=strict
+ProtectHome=true
+PrivateTmp=true
+
+[Install]
+WantedBy=multi-user.target
