@@ -94,6 +94,8 @@ npm run demo:qr      # real QR codes for each gate outcome: admit, duplicate, re
 
 To scan without a camera: paste a code from `npm run demo:qr` into the scanner's code box, or open an attendee's **Show QR** on a phone and use the scanner's camera.
 
+The class presentation is in [`docs/presentation/`](docs/presentation): open `FestPass-presentation.html` in a browser to present (arrow keys or click, F for full screen), use `FestPass-presentation.pdf` as a handout, and read `SPEAKER_NOTES.md` for what to say on each slide.
+
 ### 6. Tests
 
 ```bash
