@@ -349,6 +349,7 @@ table.table { width: 100%; border-collapse: collapse; font-size: 14px; }
 .auth-art::before { content: ''; position: absolute; width: 560px; height: 560px; right: -160px; top: -120px; background: radial-gradient(circle, rgba(236, 72, 153, 0.55), transparent 60%); }
 .auth-art::after { content: ''; position: absolute; width: 560px; height: 560px; left: -160px; bottom: -200px; background: radial-gradient(circle, rgba(124, 58, 237, 0.7), transparent 60%); }
 .auth-art > * { position: relative; z-index: 1; }
+.auth-art .chip { align-self: flex-start; }
 .auth-art h2 { font-family: var(--display); font-size: 34px; max-width: 420px; }
 .auth-art p { color: #cfc6f2; margin-top: 12px; max-width: 420px; }
 .auth-form { display: grid; place-items: center; padding: 40px 20px; }
