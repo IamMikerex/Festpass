@@ -169,6 +169,9 @@ async function payOrder(user, orderId, { method, card_number }) {
     );
     if (!order) throw notFound('Order not found');
     if (order.buyer_id !== user.user_id) throw forbidden();
+    // An order the expiry job already closed answers like one that expires right now (410),
+    // so the checkout page shows its "hold expired" screen in both cases (rule 3).
+    if (order.status === 'EXPIRED') return { expired: true };
     if (order.status !== 'PENDING') throw conflict(`This order is already ${order.status}`);
     if (order.is_expired) {
       await expireLocked(t, orderId);

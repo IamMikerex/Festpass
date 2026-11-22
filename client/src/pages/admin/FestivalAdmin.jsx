@@ -159,6 +159,10 @@ function StallForm({ festivalId, stall, onClose, onSaved }) {
       toast.success('Stall saved'); onSaved();
     } catch (x) { setErr(x.message); }
   };
+  const remove = async () => {
+    setErr(null);
+    try { await api.del(`/festivals/${festivalId}/stalls/${stall.stall_id}`); toast.success(`Stall ${stall.stall_code} deleted`); onSaved(); } catch (x) { setErr(x.message); }
+  };
   return (
     <Modal title={stall ? `Edit stall ${stall.stall_code}` : 'Add stall to site map'} onClose={onClose}>
       <form className="stack" onSubmit={submit}>
@@ -170,7 +174,16 @@ function StallForm({ festivalId, stall, onClose, onSaved }) {
           <Field label="Base fee (TRY)"><input className="input" type="number" step="0.01" min={0} required value={f.base_fee} onChange={(e) => setF({ ...f, base_fee: e.target.value })} /></Field>
           <label className="checkbox"><input type="checkbox" checked={!!f.has_power} onChange={(e) => setF({ ...f, has_power: e.target.checked })} />Power supply</label>
         </div>
-        <div className="row" style={{ justifyContent: 'flex-end' }}><button type="button" className="btn btn-outline" onClick={onClose}>Cancel</button><button className="btn btn-primary">Save stall</button></div>
+        <div className="row" style={{ justifyContent: 'flex-end' }}>
+          {stall && (
+            <button type="button" className="btn btn-danger-outline" style={{ marginRight: 'auto' }} disabled={!!stall.approved_vendor || !!stall.open_applications}
+              title={stall.approved_vendor || stall.open_applications ? 'Stalls with applications cannot be deleted' : undefined} onClick={remove}>
+              <Trash2 size={15} />Delete stall
+            </button>
+          )}
+          <button type="button" className="btn btn-outline" onClick={onClose}>Cancel</button><button className="btn btn-primary">Save stall</button>
+        </div>
+        {stall && (stall.approved_vendor || stall.open_applications) ? <p className="tiny faint">This stall has applications, so it can't be deleted.</p> : null}
       </form>
     </Modal>
   );
