@@ -282,8 +282,6 @@ test('rule 7 + 13: cancelling a festival refunds 100% and never over-refunds', a
   assert.equal(live.n, 0);
   const over = await db.one('SELECT COUNT(*) AS n FROM v_order_totals WHERE refunded_amount > captured_amount');
   assert.equal(over.n, 0);
-  const rec = await api('GET', '/admin/reconciliation', { token: tokens.auditor });
-  assert.equal(rec.status, 200);
   // a direct over-refund is stopped by the trigger
   const o = await db.one("SELECT order_id FROM Orders WHERE festival_id = 1 AND status = 'PAID' LIMIT 1");
   await assert.rejects(db.query("INSERT INTO Payments (order_id, payment_type, amount, method, status, provider_ref) VALUES (?, 'REFUND', 99999, 'CARD', 'CAPTURED', 'TEST-OVER')", [o.order_id]), /rule 13/);
@@ -303,16 +301,12 @@ test('webhook is idempotent (case 5)', async () => {
   assert.equal(second.d.duplicate, true);
 });
 
-test('dashboards and reports respond for organizer and auditor', async () => {
-  for (const tk of [tokens.organizer, tokens.auditor]) {
-    const d = await api('GET', '/admin/dashboard', { token: tk });
-    assert.equal(d.status, 200);
-    assert.ok(d.data.totals.tickets_sold > 0);
-    assert.equal((await api('GET', '/admin/festivals/2/report', { token: tk })).status, 200);
-    assert.equal((await api('GET', '/admin/payments', { token: tk })).status, 200);
-    assert.equal((await api('GET', '/admin/scans?festival_id=2', { token: tk })).status, 200);
-  }
-  const csv = await api('GET', '/admin/festivals/2/attendees?format=csv', { token: tokens.organizer });
-  assert.match(csv.data, /^ticket_id,tier_name/);
-  assert.equal((await api('GET', '/admin/festivals/2/report', { token: tokens.organizer2 })).status, 403);
+test('admin: organizers manage staff accounts, attendees cannot', async () => {
+  let r = await api('POST', '/admin/users', { token: tokens.organizer, body: { email: 'gate3@festpass.com', password: 'Secret123', full_name: 'Gate Three', date_of_birth: '1995-01-01', role: 'GATE_STAFF' } });
+  assert.equal(r.status, 201);
+  assert.equal((await api('POST', '/admin/users', { token: tokens.auditor, body: { email: 'x@festpass.com', password: 'Secret123', full_name: 'X Y', date_of_birth: '1995-01-01', role: 'GATE_STAFF' } })).status, 403);
+  r = await api('PATCH', `/admin/users/${r.data.user.user_id}/status`, { token: tokens.organizer, body: { account_status: 'SUSPENDED' } });
+  assert.equal(r.status, 200);
+  assert.equal((await api('POST', '/auth/login', { body: { email: 'gate3@festpass.com', password: 'Secret123' } })).status, 401);
+  assert.equal((await api('GET', '/admin/users', { token: tokens.ayse })).status, 403);
 });

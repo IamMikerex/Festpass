@@ -40,6 +40,6 @@ const requireRole = (...roles) => (req, _res, next) => {
 };
 
 const signToken = (user) =>
-  jwt.sign({ sub: user.user_id, role: user.role }, config.jwtSecret, { expiresIn: config.jwtExpiresIn });
+  jwt.sign({ sub: String(user.user_id), role: user.role }, config.jwtSecret, { expiresIn: config.jwtExpiresIn });
 
 module.exports = { authenticate, optionalAuth, requireRole, signToken };
