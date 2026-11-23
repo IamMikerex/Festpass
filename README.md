@@ -18,10 +18,57 @@ One FastAPI app serves the core API (`/api`), the read‑only analytics (`/analy
 
 ## Quick start
 
+### Easiest: everything in Docker (any OS)
+
+Needs only [Docker Desktop](https://www.docker.com/products/docker-desktop/), running. No Python, Node or MySQL install.
+
+1. In the project folder: `docker compose up -d --build` (first time takes a few minutes)
+2. Load the demo data (first time only, or to reset): `docker compose exec app python -m scripts.init_db`
+3. Open http://localhost:8000 and sign in with a [demo account](#5-demo-accounts).
+
+| To… | Run |
+|---|---|
+| Stop | `docker compose down` (data is kept) |
+| Start again | `docker compose up -d` |
+| Apply code changes | `docker compose up -d --build` |
+| See errors | `docker logs festpass-app` |
+| Open a MySQL prompt | `docker exec -it festpass-mysql mysql -u root -proot festpass` |
+
+Optional: copy `api/.env.example` to `api/.env` to set your own `JWT_SECRET`; Docker picks it up.
+
+### Windows, step by step without Docker for the app (for development, live reload)
+
+Do this once:
+
+1. Allow npm and venv scripts to run (fixes `npm.ps1 cannot be loaded because running scripts is disabled`):
+   ```powershell
+   Set-ExecutionPolicy -Scope CurrentUser RemoteSigned
+   ```
+   Answer `Y`, then close and reopen the terminal.
+2. Start MySQL only: `docker compose up -d mysql` (wait about 20 seconds the first time). If the Docker app is running, stop it first: `docker compose stop app` (both use port 8000).
+3. Create the Python environment and install everything:
+   ```powershell
+   python -m venv api\.venv
+   api\.venv\Scripts\activate
+   npm run install:all
+   ```
+4. Create the config file: `copy api\.env.example api\.env`
+5. Load the database: `npm run db:init`
+
+Every time you run the app:
+
+1. Terminal 1: `api\.venv\Scripts\activate`, then `npm run dev:api`
+2. Terminal 2: `npm run dev:client`
+3. Open http://localhost:5173 and sign in with a [demo account](#5-demo-accounts).
+
+Stop with `Ctrl+C` in each terminal. Docker Desktop must be running before step 1.
+
+The sections below cover the same setup for macOS/Linux and for a local MySQL without Docker.
+
 ### 1. Requirements
 - Python 3.10+
 - Node.js 18+ and npm (React client only)
-- MySQL 8.0 (local install, or `docker compose up -d` with the included [`docker-compose.yml`](docker-compose.yml))
+- MySQL 8.0 (local install, or `docker compose up -d mysql` with the included [`docker-compose.yml`](docker-compose.yml))
 
 ### 2. Database user
 With a local MySQL, create the app user once (as root):
@@ -34,7 +81,7 @@ GRANT CREATE, DROP ON *.* TO 'festpass'@'localhost';
 SET GLOBAL log_bin_trust_function_creators = 1;
 ```
 
-(Using Docker? `docker compose up -d` does all of this for you.)
+(Using Docker? `docker compose up -d mysql` does all of this for you.)
 
 ### 3. Install, configure, seed
 

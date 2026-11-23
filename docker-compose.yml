@@ -1,4 +1,5 @@
-# Optional local MySQL 8.0 for FestPass: `docker compose up -d`, then `npm run db:init`.
+# Whole app in Docker: `docker compose up -d --build`, then once `docker compose exec app python -m scripts.init_db`.
+# Open http://localhost:8000. MySQL alone (for `npm run dev:*`): `docker compose up -d mysql`.
 services:
   mysql:
     image: mysql:8.0
@@ -15,5 +16,25 @@ services:
     volumes:
       - festpass-mysql:/var/lib/mysql
       - ./database/grant.sql:/docker-entrypoint-initdb.d/00-grant.sql:ro
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "127.0.0.1", "-proot"]
+      interval: 5s
+      retries: 30
+
+  app:
+    build: .
+    container_name: festpass-app
+    env_file:
+      - path: api/.env
+        required: false
+    environment:
+      DB_HOST: mysql
+      DB_PORT: "3306"
+    ports:
+      - "8000:8000"
+    depends_on:
+      mysql:
+        condition: service_healthy
+    restart: unless-stopped
 volumes:
   festpass-mysql:
