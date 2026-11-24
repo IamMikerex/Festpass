@@ -25,7 +25,9 @@ htmlcov/
 npm-debug.log*
 
 # Editors and OS
-.vscode/
+.vscode/*
+!.vscode/extensions.json
+!.vscode/settings.json
 .idea/
 *.swp
 .DS_Store
@@ -45,3 +47,6 @@ CLAUDE.local.md
 .codex/
 AGENTS.md
 HANDOVER.md
+
+# Local SQLite demo database (created on startup)
+*.db

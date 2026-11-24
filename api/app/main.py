@@ -1,4 +1,4 @@
-"""FestPass API. Run: uvicorn app.main:app --reload --port 8000"""
+"""FestPass API. Run from api/: `fastapi dev` (docs at /docs and /redoc)."""
 import asyncio
 import contextlib
 import logging
@@ -6,13 +6,14 @@ from contextlib import asynccontextmanager
 
 from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi.responses import FileResponse
+from fastapi.responses import FileResponse, RedirectResponse
 
 from . import errors, jobs
 from .config import settings
 from .db import db
 from .errors import NotFound
-from .routers import admin, analytics, auth, festivals, orders, payments, scans, tickets, vendors
+from .models import create_sqlite_tables
+from .routers import admin, analytics, auth, catalog, festivals, lineup, orders, payments, scans, tickets, vendors
 
 logging.basicConfig(level=logging.INFO, format="%(asctime)s %(levelname)s %(name)s: %(message)s")
 
@@ -26,6 +27,7 @@ SECURITY_HEADERS = {
 
 @asynccontextmanager
 async def lifespan(_: FastAPI):
+    create_sqlite_tables()
     task = asyncio.create_task(jobs.run_forever()) if settings.jobs_interval > 0 else None
     yield
     if not task:
@@ -40,7 +42,8 @@ app = FastAPI(
     version="2.0.0",
     description="Music festival ticketing and vendor management. Sign in at `POST /api/auth/login`, "
                 "then send `Authorization: Bearer <token>`.",
-    docs_url="/api/docs",
+    docs_url="/docs",
+    redoc_url="/redoc",
     openapi_url="/api/openapi.json",
     lifespan=lifespan,
 )
@@ -56,12 +59,22 @@ async def security_headers(request: Request, call_next):
     return response
 
 
+@app.get("/api", tags=["meta"])
+async def read_root():
+    return {"Hello": "World", "app": "FestPass API", "docs": "/docs", "redoc": "/redoc"}
+
+
+@app.get("/api/docs", include_in_schema=False)
+def old_docs():
+    return RedirectResponse("/docs")
+
+
 @app.get("/api/health", tags=["meta"])
 def health():
     return {"ok": True, **db.fetch_one("SELECT NOW() AS db_time, VERSION() AS version")}
 
 
-for module in (auth, festivals, orders, tickets, scans, vendors, payments, admin, analytics):
+for module in (auth, festivals, orders, tickets, scans, vendors, payments, admin, analytics, catalog, lineup):
     app.include_router(module.router)
 app.include_router(vendors.allocations)
 

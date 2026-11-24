@@ -1,4 +1,5 @@
-fastapi==0.115.6
+fastapi[standard]==0.115.6
+sqlmodel==0.0.22
 uvicorn[standard]==0.32.1
 PyMySQL==1.1.1
 cryptography==44.0.0

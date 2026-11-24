@@ -26,6 +26,29 @@ Railway variables for the web service (see [`api/.env.example`](api/.env.example
 
 Concert photos in `client/public/img` are from [Unsplash](https://unsplash.com/license) (free to use). Each festival's genre, photo and accent colour are picked from its name in `client/src/lib/vibe.js`, because the schema stores no genre.
 
+## Run with `fastapi dev` (VS Code)
+
+Needs Python 3.12, the venv in `api/.venv` with `pip install -r api/requirements.txt` (includes `fastapi[standard]` and `sqlmodel`), and MySQL running (`docker compose up -d mysql`, then `cd api` and `python -m scripts.init_db` once).
+
+```powershell
+cd api
+.venv\Scripts\activate
+fastapi dev            # auto-detects app/main.py, reloads on save
+```
+
+If the Docker app is running it already uses port 8000: stop it (`docker compose stop app`) or run `fastapi dev --port 8001`.
+
+| URL | What |
+|---|---|
+| http://127.0.0.1:8000/api | JSON root (`{"Hello": "World", ...}`) |
+| http://127.0.0.1:8000/docs | Swagger UI, every endpoint can be tried here |
+| http://127.0.0.1:8000/redoc | ReDoc |
+| http://127.0.0.1:8000/api/catalog/festivals | Festivals read through **SQLModel** from MySQL (`app/models.py`, `app/routers/catalog.py`) |
+| http://127.0.0.1:8000/api/demo/artists | **SQLModel + SQLite** CRUD example (`app/routers/lineup.py`); the file `api/festpass_demo.db` opens in VS Code's SQLite Viewer |
+| http://127.0.0.1:8000/ | The website (needs `npm run build` once so `client/dist` exists) |
+
+The main FestPass data stays in MySQL because its 12 triggers and 6 views are MySQL-specific. VS Code suggests the needed extensions from `.vscode/extensions.json`.
+
 ## Quick start
 
 ### Easiest: everything in Docker (any OS)
@@ -111,7 +134,7 @@ npm run db:init                          # drops + recreates `festpass` from dat
 ### 4. Run (two terminals)
 
 ```bash
-npm run dev:api          # FastAPI      http://localhost:8000/api   (interactive docs: /api/docs)
+npm run dev:api          # FastAPI      http://localhost:8000/api   (interactive docs: /docs, /redoc)
 npm run dev:client       # React (Vite) http://localhost:5173
 ```
 
@@ -180,7 +203,7 @@ Concurrency cases from Part 3 d: overselling (tier row `FOR UPDATE`), the same Q
 
 All routes are JSON. Send `Authorization: Bearer <token>` from `/api/auth/login`.
 
-**Core, `/api`** (interactive docs at `/api/docs`)
+**Core, `/api`** (interactive docs at `/docs` and `/redoc`)
 
 | Area | Endpoints |
 |---|---|
