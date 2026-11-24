@@ -2,7 +2,8 @@
 Rebuilds the `festpass` database from database/festpass.sql (drops it first!).
 Understands the MySQL CLI's DELIMITER directive used by triggers and procedures.
 
-    python -m scripts.init_db        (run from the api/ folder)
+    python -m scripts.init_db             (run from the api/ folder)
+    python -m scripts.init_db --if-empty  (skip when festpass already has data; used on deploy)
 """
 import re
 import sys
@@ -35,6 +36,10 @@ def main():
     batch = list(statements(script.read_text(encoding="utf-8")))
     conn = connect(database=None)
     with conn.cursor() as cur:
+        if "--if-empty" in sys.argv and cur.execute(
+                "SELECT 1 FROM information_schema.tables WHERE table_schema = 'festpass' AND table_name = 'Users'"):
+            print("Database already initialised; skipping.")
+            return conn.close()
         print(f"Running {script.name} ({len(batch)} statements)...", end=" ", flush=True)
         for statement in batch:
             try:

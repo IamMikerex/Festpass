@@ -14,4 +14,5 @@ COPY api/ ./
 COPY database/ /app/database/
 COPY --from=client /client/dist /app/client/dist
 EXPOSE 8000
-CMD ["python", "-m", "uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "8000"]
+# Builds the demo database on first start only; PORT is set by hosts such as Railway.
+CMD ["sh", "-c", "python -m scripts.init_db --if-empty && exec python -m uvicorn app.main:app --host 0.0.0.0 --port ${PORT:-8000}"]
