@@ -35,7 +35,7 @@ function Scans({ onTrail }) {
   return (
     <div className="card">
       <div className="card-head">
-        <select className="select" style={{ width: 220 }} value={result} onChange={(e) => setResult(e.target.value)}>
+        <select className="select" style={{ width: 'auto', minWidth: 220 }} value={result} onChange={(e) => setResult(e.target.value)}>
           <option value="">All results</option>{['ACCEPTED', 'REJECTED_DUPLICATE', 'REJECTED_INVALID', 'REJECTED_NOT_LIVE'].map((s) => <option key={s} value={s}>{label(s)}</option>)}
         </select>
         <button className="btn btn-outline btn-sm" onClick={() => analytics.download(`/scans${qs({ result })}`, 'gate-scans.csv').catch((e) => toast.error(e.message))}><Download size={15} />CSV</button>

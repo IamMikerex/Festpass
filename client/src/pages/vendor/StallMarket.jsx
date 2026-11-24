@@ -74,7 +74,7 @@ export default function StallMarket() {
     <>
       <div className="page-head">
         <div><h1>Find a stall</h1><p>Pick a festival, then a free spot on its site map.</p></div>
-        <select className="select" style={{ width: 300 }} value={festivalId || ''} onChange={(e) => setParams({ festival: e.target.value })}>
+        <select className="select" style={{ width: 'auto', minWidth: 300 }} value={festivalId || ''} onChange={(e) => setParams({ festival: e.target.value })}>
           {fests.data.festivals.map((f) => <option key={f.festival_id} value={f.festival_id}>{f.name} · {dateRange(f.start_date, f.end_date)} · {f.stall_count} stalls</option>)}
         </select>
       </div>

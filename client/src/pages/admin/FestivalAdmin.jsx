@@ -285,7 +285,7 @@ function Attendees({ festival, canEdit }) {
       <div className="card-head">
         <div className="row" style={{ flex: 1 }}>
           <div className="input-icon" style={{ flex: '1 1 240px', maxWidth: 360 }}><Search size={16} /><input className="input" placeholder="Name, email or ticket id" value={q} onChange={(e) => setQ(e.target.value)} /></div>
-          <select className="select" style={{ width: 170 }} value={status} onChange={(e) => setStatus(e.target.value)}>
+          <select className="select" style={{ width: 'auto', minWidth: 170 }} value={status} onChange={(e) => setStatus(e.target.value)}>
             <option value="">All statuses</option>{['VALID', 'CHECKED_IN', 'REFUNDED', 'VOID'].map((s) => <option key={s} value={s}>{label(s)}</option>)}
           </select>
         </div>
@@ -327,7 +327,7 @@ function Scans({ festival }) {
   return (
     <div className="card">
       <div className="card-head">
-        <select className="select" style={{ width: 220 }} value={result} onChange={(e) => setResult(e.target.value)}>
+        <select className="select" style={{ width: 'auto', minWidth: 220 }} value={result} onChange={(e) => setResult(e.target.value)}>
           <option value="">All results</option>{['ACCEPTED', 'REJECTED_DUPLICATE', 'REJECTED_INVALID', 'REJECTED_NOT_LIVE'].map((s) => <option key={s} value={s}>{label(s)}</option>)}
         </select>
         <button className="btn btn-outline btn-sm" onClick={() => analytics.download(`/scans${qs({ festival_id: festival.festival_id, result })}`, `scans-${festival.festival_id}.csv`).catch((e) => toast.error(e.message))}><Download size={15} />Export CSV</button>

@@ -106,7 +106,7 @@ export default function VendorReview() {
         <div className="stack">
           <div className="row">
             <div className="input-icon" style={{ flex: '1 1 260px', maxWidth: 360 }}><Search size={16} /><input className="input" placeholder="Name or tax number" value={q} onChange={(e) => setQ(e.target.value)} /></div>
-            <select className="select" style={{ width: 200 }} value={status} onChange={(e) => setStatus(e.target.value)}>
+            <select className="select" style={{ width: 'auto', minWidth: 200 }} value={status} onChange={(e) => setStatus(e.target.value)}>
               <option value="">All statuses</option>{['PENDING_REVIEW', 'ACTIVE', 'BLACKLISTED'].map((s) => <option key={s} value={s}>{label(s)}</option>)}
             </select>
           </div>

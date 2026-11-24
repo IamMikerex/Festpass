@@ -51,7 +51,7 @@ export default function UsersAdmin() {
       </div>
       <div className="row mb-2">
         <div className="input-icon" style={{ flex: '1 1 260px', maxWidth: 360 }}><Search size={16} /><input className="input" placeholder="Name or email" value={q} onChange={(e) => setQ(e.target.value)} /></div>
-        <select className="select" style={{ width: 200 }} value={role} onChange={(e) => setRole(e.target.value)}><option value="">All roles</option>{ROLES.map((r) => <option key={r} value={r}>{label(r)}</option>)}</select>
+        <select className="select" style={{ width: 'auto', minWidth: 200 }} value={role} onChange={(e) => setRole(e.target.value)}><option value="">All roles</option>{ROLES.map((r) => <option key={r} value={r}>{label(r)}</option>)}</select>
       </div>
       <div className="card">
         {loading ? <Loading /> : error ? <ErrorState error={error} /> : data.users.length === 0 ? <Empty icon={Users} title="No users found" /> : (

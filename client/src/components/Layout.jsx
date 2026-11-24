@@ -5,6 +5,9 @@ import {
   LogOut, Menu, X, ClipboardList, Wallet, UserCircle, MapPinned, FileSearch,
 } from 'lucide-react';
 import { useAuth } from '../lib/auth';
+import { usePrefs } from '../lib/prefs';
+import { Wordmark } from './Logo';
+import Customizer from './Customizer';
 import { label } from '../lib/format';
 
 const LINKS = {
@@ -43,6 +46,7 @@ const LINKS = {
 
 export default function Layout() {
   const { user, logout } = useAuth();
+  const { prefs } = usePrefs();
   const [open, setOpen] = useState(false);
   const nav = useNavigate();
   const loc = useLocation();
@@ -58,12 +62,13 @@ export default function Layout() {
 
   return (
     <div className="app">
-      <div className="stage-bg" aria-hidden="true"><i /><i /><i /><i /></div>
+      <div className="stage-bg" aria-hidden="true"><i /><i /><i /><i /><b className="aurora" /><b className="specks" /></div>
       <header className="nav">
         <div className="container nav-inner">
-          <Link to="/" className="brand"><span className="brand-mark"><Ticket size={18} /></span>FestPass</Link>
+          <Link to="/" className="brand" aria-label="FestPass home"><Wordmark variant={prefs.logo} /></Link>
           <nav className="nav-links">{linkEls}</nav>
           <div className="nav-right" style={{ marginLeft: 'auto' }}>
+            <Customizer />
             {user ? (
               <>
                 <Link to="/profile" className="user-chip" title="Profile" style={{ color: 'inherit', textDecoration: 'none' }}>
@@ -81,6 +86,7 @@ export default function Layout() {
             <button className="btn btn-outline btn-icon menu-btn" onClick={() => setOpen((o) => !o)} aria-label={open ? 'Close menu' : 'Open menu'} aria-expanded={open}>{open ? <X size={18} /> : <Menu size={18} />}</button>
           </div>
         </div>
+        <span className="route-line" key={loc.pathname} aria-hidden="true" />
         {open && (
           <div className="mobile-menu">
             {linkEls}

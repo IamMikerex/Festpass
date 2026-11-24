@@ -16,10 +16,10 @@ function Ledger({ festivals }) {
     <div className="stack">
       <div className="card card-pad">
         <div className="row">
-          <select className="select" style={{ width: 220 }} value={f.festival_id} onChange={set('festival_id')}><option value="">All festivals</option>{festivals.map((x) => <option key={x.festival_id} value={x.festival_id}>{x.name}</option>)}</select>
-          <select className="select" style={{ width: 140 }} value={f.type} onChange={set('type')}><option value="">Charges & refunds</option><option value="CHARGE">Charges</option><option value="REFUND">Refunds</option></select>
-          <select className="select" style={{ width: 150 }} value={f.status} onChange={set('status')}><option value="">Any status</option>{['CAPTURED', 'AUTHORIZED', 'FAILED'].map((s) => <option key={s} value={s}>{label(s)}</option>)}</select>
-          <select className="select" style={{ width: 160 }} value={f.context} onChange={set('context')}><option value="">Tickets & stalls</option><option value="TICKET_ORDER">Ticket orders</option><option value="STALL_FEE">Stall fees</option></select>
+          <select className="select" style={{ width: 'auto', minWidth: 220 }} value={f.festival_id} onChange={set('festival_id')}><option value="">All festivals</option>{festivals.map((x) => <option key={x.festival_id} value={x.festival_id}>{x.name}</option>)}</select>
+          <select className="select" style={{ width: 'auto', minWidth: 140 }} value={f.type} onChange={set('type')}><option value="">Charges & refunds</option><option value="CHARGE">Charges</option><option value="REFUND">Refunds</option></select>
+          <select className="select" style={{ width: 'auto', minWidth: 150 }} value={f.status} onChange={set('status')}><option value="">Any status</option>{['CAPTURED', 'AUTHORIZED', 'FAILED'].map((s) => <option key={s} value={s}>{label(s)}</option>)}</select>
+          <select className="select" style={{ width: 'auto', minWidth: 160 }} value={f.context} onChange={set('context')}><option value="">Tickets & stalls</option><option value="TICKET_ORDER">Ticket orders</option><option value="STALL_FEE">Stall fees</option></select>
           <input className="input" type="date" style={{ width: 160 }} value={f.from} onChange={set('from')} title="From" />
           <input className="input" type="date" style={{ width: 160 }} value={f.to} onChange={set('to')} title="To" />
           <button className="btn btn-outline" onClick={() => analytics.download(`/payments${qs(f)}`, 'payments.csv').catch((e) => toast.error(e.message))}><Download size={15} />CSV</button>
