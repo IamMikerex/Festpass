@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { Html5Qrcode } from 'html5-qrcode';
-import { Camera, CameraOff, CheckCircle2, XCircle, AlertTriangle, LogIn, LogOut, Keyboard, Users } from 'lucide-react';
+import { Camera, CameraOff, CheckCircle2, XCircle, AlertTriangle, LogIn, LogOut, Keyboard, Users, ScanLine } from 'lucide-react';
 import { api } from '../../lib/api';
 import { useFetch } from '../../lib/useFetch';
 import { Badge, Field, Loading } from '../../components/ui';
@@ -99,12 +99,12 @@ export default function Scanner() {
 
   return (
     <div className="scanner-shell stack">
-      <div className="row-between">
-        <div><h1>Gate scanner</h1><p className="muted small">Scan each QR code; the screen shows admit or refuse.</p></div>
-        {festival && <span className="badge blue plain"><Users size={13} />{festival.inside_now} inside</span>}
+      <div className="scan-status">
+        <div><h1 style={{ fontSize: 22 }}>Gate scanner</h1><p className="muted small">Scan each QR code. The screen shows admit or refuse.</p></div>
+        {festival && <span className="badge blue plain" style={{ height: 32, fontSize: 13 }}><Users size={14} />{festival.inside_now} inside</span>}
       </div>
 
-      <div className="card card-pad stack">
+      <div className="card card-pad stack-sm">
         <div className="form-grid">
           <Field label="Festival">
             <select className="select" value={festivalId} onChange={(e) => setFestivalId(e.target.value)}>
@@ -113,22 +113,26 @@ export default function Scanner() {
           </Field>
           <Field label="Gate"><input className="input mono" value={gate} maxLength={10} onChange={(e) => setGate(e.target.value.toUpperCase())} /></Field>
         </div>
-        <div className="segmented" style={{ alignSelf: 'stretch', display: 'grid', gridTemplateColumns: '1fr 1fr' }}>
-          <button className={direction === 'IN' ? 'on' : ''} onClick={() => setDirection('IN')}><LogIn size={15} style={{ verticalAlign: -3, marginRight: 6 }} />Entry (IN)</button>
-          <button className={direction === 'OUT' ? 'on' : ''} onClick={() => setDirection('OUT')}><LogOut size={15} style={{ verticalAlign: -3, marginRight: 6 }} />Exit (OUT)</button>
-        </div>
         {festival && festival.status !== 'LIVE' && <p className="small" style={{ color: 'var(--warning)' }}>This festival is not live, so entries will be refused.</p>}
       </div>
 
-      {result && <ResultCard r={result} />}
+      <div className="dir-toggle" role="group" aria-label="Direction">
+        <button className={`in ${direction === 'IN' ? 'on' : ''}`} aria-pressed={direction === 'IN'} onClick={() => setDirection('IN')}><LogIn size={20} />Entry (IN)</button>
+        <button className={`out ${direction === 'OUT' ? 'on' : ''}`} aria-pressed={direction === 'OUT'} onClick={() => setDirection('OUT')}><LogOut size={20} />Exit (OUT)</button>
+      </div>
+
+      <div aria-live="assertive">
+        {result ? <ResultCard r={result} /> : <div className="scan-idle"><ScanLine size={28} style={{ margin: '0 auto 6px', display: 'block', color: 'var(--primary)' }} /><b>Ready to scan</b><p className="small mt-1">Start the camera or type a code. The result appears here.</p></div>}
+      </div>
 
       <div className="scan-view">
         <div id="qr-reader" />
+        {camOn && <div className="scan-frame" aria-hidden="true" />}
         {!camOn && (
           <div className="center stack-sm" style={{ position: 'absolute', padding: 20 }}>
             <Camera size={40} style={{ margin: '0 auto' }} />
             <p className="small">Camera is off</p>
-            {camError && <p className="small" style={{ color: '#fca5a5' }}>{camError}</p>}
+            {camError && <p className="small" style={{ color: 'var(--danger)' }}>{camError}</p>}
           </div>
         )}
       </div>
@@ -140,7 +144,7 @@ export default function Scanner() {
         <label className="small bold row"><Keyboard size={15} />Manual entry / handheld scanner</label>
         <div className="row">
           <input className="input mono" style={{ flex: 1 }} placeholder="64-character QR code" value={manual} onChange={(e) => setManual(e.target.value)} />
-          <button className="btn btn-primary">Check</button>
+          <button className="btn btn-primary btn-lg" style={{ height: 44 }}>Check</button>
         </div>
       </form>
 

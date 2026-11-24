@@ -34,6 +34,13 @@ export default function PaymentForm({ amount, onPay, disabled, cta = 'Pay' }) {
         ))}
       </div>
       {method === 'CARD' && (
+        <div className="card-preview" aria-hidden="true">
+          <div className="row-between"><b>FestPass Pay</b><CreditCard size={22} /></div>
+          <div className="num">{(card || '•••• •••• •••• ••••').replace(/\d(?=(?:\D*\d){4})/g, '•')}</div>
+          <div className="row-between tiny" style={{ opacity: 0.85 }}><span>Test mode</span><span>{exp}</span></div>
+        </div>
+      )}
+      {method === 'CARD' && (
         <div className="form-grid">
           <Field label="Card number" className="full" hint="Test mode: any number works; one ending in 0002 is declined.">
             <input className="input mono" inputMode="numeric" value={card} onChange={(e) => setCard(e.target.value.replace(/[^\d ]/g, '').slice(0, 23))} required />
