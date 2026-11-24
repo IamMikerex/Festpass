@@ -1,42 +1,42 @@
 import { useEffect, useId, useRef, useState } from 'react';
 import { SlidersHorizontal, RotateCcw, Accessibility, Pause, Contrast, Type, Focus, Sparkles, MousePointer2, Move3d } from 'lucide-react';
 import { usePrefs } from '../lib/prefs';
-import Logo from './Logo';
 
 const THEMES = [['sunset', 'Sunset orange'], ['purple', 'Electric purple'], ['pink', 'Neon pink'], ['blue', 'Cyber blue'], ['rainbow', 'Festival rainbow']];
-const LOGOS = [['ticket', 'Ticket'], ['stage', 'Stage'], ['outline', 'Outline']];
 const LIGHTS = [['beams', 'Beams'], ['aurora', 'Aurora'], ['minimal', 'Minimal']];
 const MOTION = [['off', 'Still'], ['calm', 'Calm'], ['lively', 'Lively']];
 const TEXT = [['sm', 'Small'], ['md', 'Default'], ['lg', 'Large'], ['xl', 'X-large']];
 
-function Segment({ label, options, value, onChange, disabled, note }) {
+// Controls are never disabled: a choice an accessibility setting overrides is still saved, and the note says why it is paused.
+function Segment({ label, options, value, onChange, note }) {
+  const id = useId();
   return (
-    <fieldset className="pref" disabled={disabled}>
+    <fieldset className="pref" aria-describedby={note ? id : undefined}>
       <legend className="pref-label">{label}</legend>
       <div className="segmented">
         {options.map(([v, t]) => (
           <button key={v} type="button" aria-pressed={value === v} className={value === v ? 'on' : ''} onClick={() => onChange(v)}>{t}</button>
         ))}
       </div>
-      {note && <small className="pref-note">{note}</small>}
+      {note && <small id={id} className="pref-note">{note}</small>}
     </fieldset>
   );
 }
 
-function Toggle({ icon: Icon, label, hint, checked, onChange, disabled, note }) {
+function Toggle({ icon: Icon, label, hint, checked, onChange, note }) {
   const id = useId();
   return (
-    <div className={`switch-row ${disabled ? 'is-off' : ''}`}>
+    <div className={`switch-row ${note ? 'is-paused' : ''}`}>
       {Icon && <Icon size={18} className="switch-ic" aria-hidden="true" />}
       <label htmlFor={id}><b>{label}</b><small id={`${id}-d`}>{note || hint}</small></label>
-      <input id={id} type="checkbox" role="switch" className="switch" checked={checked} disabled={disabled}
+      <input id={id} type="checkbox" role="switch" className="switch" checked={checked}
         aria-describedby={`${id}-d`} onChange={(e) => onChange(e.target.checked)} />
     </div>
   );
 }
 
 export default function Customizer() {
-  const { prefs, set, reset, os } = usePrefs();
+  const { prefs, set, reset, os, still } = usePrefs();
   const [open, setOpen] = useState(false);
   const box = useRef(null);
   const btn = useRef(null);
@@ -54,8 +54,10 @@ export default function Customizer() {
     return () => { document.removeEventListener('pointerdown', away); document.removeEventListener('keydown', esc); };
   }, [open]);
 
-  const still = prefs.reduce || os;
-  const fxNote = prefs.simple ? 'Off while visual effects are disabled' : still ? 'Off while motion is reduced' : null;
+  const why = prefs.simple ? 'Visual effects are disabled' : still ? 'Reduce motion is on' : null;
+  const paused = why && `Paused: ${why.toLowerCase()}`;
+  const reduceNote = prefs.reduce === 'system' && os ? 'On because your device asks for reduced motion'
+    : prefs.reduce === 'off' && os ? 'Off here, although your device asks for reduced motion' : null;
 
   return (
     <div className="customizer" ref={box}>
@@ -79,26 +81,23 @@ export default function Customizer() {
             </div>
             <span className="tiny muted" aria-live="polite">{THEMES.find(([v]) => v === prefs.theme)?.[1]}</span>
           </fieldset>
-          <fieldset className="pref">
-            <legend className="pref-label">Logo</legend>
-            <div className="logo-picks">
-              {LOGOS.map(([v, t]) => (
-                <button key={v} type="button" aria-pressed={prefs.logo === v} className={prefs.logo === v ? 'on' : ''} onClick={() => set({ logo: v })}><Logo variant={v} size={28} />{t}</button>
-              ))}
-            </div>
-          </fieldset>
-          <Segment label="Lighting" options={LIGHTS} value={prefs.bg} onChange={(bg) => set({ bg })} />
-          <Segment label="Motion" options={MOTION} value={still ? 'off' : prefs.motion} onChange={(motion) => set({ motion })}
-            disabled={still} note={still ? 'Still while Reduce motion is on' : null} />
+          <Segment label="Lighting" options={LIGHTS} value={prefs.bg} onChange={(bg) => set({ bg })}
+            note={prefs.simple ? 'Minimal while visual effects are disabled' : null} />
+          <Segment label="Motion" options={MOTION} value={prefs.motion} onChange={(motion) => set({ motion })}
+            note={still && prefs.motion !== 'off' ? 'Paused: Reduce motion is on (see Accessibility)' : null} />
           <div className="pref">
-            <Toggle icon={MousePointer2} label="Cursor light" hint="Panels glow where you point" checked={prefs.glow && !fxNote} disabled={!!fxNote} note={fxNote} onChange={(glow) => set({ glow })} />
-            <Toggle icon={Move3d} label="Card tilt" hint="Festival cards lean toward the cursor" checked={prefs.tilt && !fxNote} disabled={!!fxNote} note={fxNote} onChange={(tilt) => set({ tilt })} />
+            <span className="pref-label">Effects</span>
+            <Toggle icon={MousePointer2} label="Cursor light" hint="A soft light follows your pointer" checked={prefs.glow} note={prefs.glow ? paused : null} onChange={(glow) => set({ glow })} />
+            <Toggle icon={Move3d} label="Card tilt" hint="Festival cards lean toward the pointer" checked={prefs.tilt} note={prefs.tilt ? paused : null} onChange={(tilt) => set({ tilt })} />
           </div>
 
           <div className="pref-section" role="group" aria-labelledby={`${panelId}-a`}>
             <h3 id={`${panelId}-a`}><Accessibility size={16} aria-hidden="true" /> Accessibility</h3>
-            <Toggle icon={Pause} label="Reduce motion" hint="Stops moving lights, specks, tilt and page animations"
-              checked={still} disabled={os} note={os ? 'On because your device asks for reduced motion' : null} onChange={(reduce) => set({ reduce })} />
+            <Toggle icon={Pause} label="Reduce motion" hint="Stops moving lights, specks, tilt, cursor light and page animations"
+              checked={still} note={reduceNote} onChange={(on) => set({ reduce: on ? 'on' : 'off' })} />
+            {prefs.reduce !== 'system' && os && (
+              <button type="button" className="link-btn tiny" onClick={() => set({ reduce: 'system' })}>Follow my device setting again</button>
+            )}
             <Toggle icon={Contrast} label="High contrast" hint="Brighter text, stronger borders and clearer controls" checked={prefs.contrast} onChange={(contrast) => set({ contrast })} />
             <Toggle icon={Focus} label="Bold focus outline" hint="Thick yellow outline on whatever the keyboard is on" checked={prefs.focus} onChange={(focus) => set({ focus })} />
             <Toggle icon={Sparkles} label="Disable visual effects" hint="No glow, cursor light, tilt, specks or animated lighting" checked={prefs.simple} onChange={(simple) => set({ simple })} />

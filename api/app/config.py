@@ -30,6 +30,8 @@ class Settings:
     jobs_interval = int(_env("JOBS_INTERVAL_SECONDS", "30"))
     client_dist = ROOT.parent / "client" / "dist"
     database_dir = ROOT.parent / "database"
+    # Local SQLite demo DB: outside every served folder (client/dist) and excluded from Git.
+    data_dir = Path(os.getenv("DATA_DIR", ROOT / "data"))
 
 
 settings = Settings()

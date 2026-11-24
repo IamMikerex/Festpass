@@ -1,6 +1,7 @@
 import { createContext, useCallback, useContext, useEffect, useState } from 'react';
 import { AlertCircle, CheckCircle2, Info, X, AlertTriangle } from 'lucide-react';
 import { label } from '../lib/format';
+import Logo from './Logo';
 
 const TONES = {
   // festival
@@ -27,7 +28,14 @@ export function Badge({ value, tone, children, title }) {
 }
 
 export function Loading({ label: text }) {
-  return <div className="loading"><div className="stack-sm center"><div className="spinner" style={{ margin: '0 auto' }} />{text && <span className="muted small">{text}</span>}</div></div>;
+  return (
+    <div className="loading" role="status">
+      <div className="stack-sm center">
+        {text ? <span className="loading-logo"><Logo size={44} /></span> : <div className="spinner" style={{ margin: '0 auto' }} />}
+        <span className={text ? 'muted small' : 'sr-only'}>{text || 'Loading…'}</span>
+      </div>
+    </div>
+  );
 }
 
 export function Empty({ icon: Icon = Info, title, children, action }) {

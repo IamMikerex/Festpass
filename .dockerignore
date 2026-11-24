@@ -5,3 +5,10 @@
 **/.pytest_cache
 **/.env
 .git
+# Databases, backups and local data never go into the image
+**/data
+**/*.db
+**/*.sqlite*
+**/tests/.data
+**/.env.*
+!**/.env.example

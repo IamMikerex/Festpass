@@ -1,4 +1,4 @@
-"""SQLModel + SQLite CRUD example: a simple artist line-up stored in api/festpass_demo.db."""
+"""SQLModel + SQLite CRUD example: a simple artist line-up stored in api/data/festpass_demo.db."""
 from typing import Annotated
 
 from fastapi import APIRouter, Depends, Query

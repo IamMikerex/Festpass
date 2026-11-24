@@ -3,6 +3,7 @@ import { Link, useLocation, useNavigate, useSearchParams } from 'react-router-do
 import { Mail, Lock, Ticket, Store } from 'lucide-react';
 import { useAuth, HOME_BY_ROLE } from '../lib/auth';
 import { Alert, Field } from '../components/ui';
+import Logo, { Wordmark } from '../components/Logo';
 
 const DEMO = [
   { email: 'ayse@festpass.com', role: 'Attendee', name: 'Ayse' },
@@ -17,6 +18,7 @@ function AuthArt({ title, text }) {
   return (
     <div className="auth-art">
       <img className="hero-photo" src="/img/lasers.webp" alt="" />
+      <span className="auth-brand"><Wordmark size={40} /></span>
       <h2>{title}</h2>
       <p>{text}</p>
     </div>
@@ -46,7 +48,7 @@ export function Login() {
       <AuthArt title="Welcome back to the front row." text="Your tickets, transfers, stall applications and gate tools are one sign-in away." />
       <div className="auth-form">
         <form className="auth-card stack" onSubmit={submit}>
-          <div><h1>Sign in</h1><p className="muted mt-1">New here? <Link to="/register">Create an account</Link></p></div>
+          <div><span className="auth-logo"><Logo size={44} /></span><h1>Sign in</h1><p className="muted mt-1">New here? <Link to="/register">Create an account</Link></p></div>
           {error && <Alert kind="error">{error}</Alert>}
           <Field label="Email"><div className="input-icon"><Mail size={16} /><input className="input" type="email" autoComplete="email" required value={email} onChange={(e) => setEmail(e.target.value)} /></div></Field>
           <Field label="Password"><div className="input-icon"><Lock size={16} /><input className="input" type="password" autoComplete="current-password" required value={password} onChange={(e) => setPassword(e.target.value)} /></div></Field>
@@ -91,7 +93,7 @@ export function Register() {
       <AuthArt title="One account for every festival." text="Fans buy and manage named tickets. Vendors register their business and apply for stalls. Staff accounts are created by organizers." />
       <div className="auth-form">
         <form className="auth-card stack" onSubmit={submit}>
-          <div><h1>Create account</h1><p className="muted mt-1">Already registered? <Link to="/login">Sign in</Link></p></div>
+          <div><span className="auth-logo"><Logo size={44} /></span><h1>Create account</h1><p className="muted mt-1">Already registered? <Link to="/login">Sign in</Link></p></div>
           <div className="segmented">
             <button type="button" className={form.role === 'ATTENDEE' ? 'on' : ''} onClick={() => setForm((f) => ({ ...f, role: 'ATTENDEE' }))}><Ticket size={14} style={{ verticalAlign: -2, marginRight: 6 }} />I'm a fan</button>
             <button type="button" className={form.role === 'VENDOR_MANAGER' ? 'on' : ''} onClick={() => setForm((f) => ({ ...f, role: 'VENDOR_MANAGER' }))}><Store size={14} style={{ verticalAlign: -2, marginRight: 6 }} />I'm a vendor</button>

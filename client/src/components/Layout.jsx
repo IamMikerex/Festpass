@@ -5,7 +5,6 @@ import {
   LogOut, Menu, X, ClipboardList, Wallet, UserCircle, MapPinned, FileSearch,
 } from 'lucide-react';
 import { useAuth } from '../lib/auth';
-import { usePrefs } from '../lib/prefs';
 import { Wordmark } from './Logo';
 import Customizer from './Customizer';
 import { label } from '../lib/format';
@@ -46,7 +45,6 @@ const LINKS = {
 
 export default function Layout() {
   const { user, logout } = useAuth();
-  const { prefs } = usePrefs();
   const [open, setOpen] = useState(false);
   const nav = useNavigate();
   const loc = useLocation();
@@ -63,10 +61,10 @@ export default function Layout() {
   return (
     <div className="app">
       <a href="#main" className="skip-link">Skip to content</a>
-      <div className="stage-bg" aria-hidden="true"><i /><i /><i /><i /><b className="aurora" /><b className="specks" /></div>
+      <div className="stage-bg" aria-hidden="true"><i /><i /><i /><i /><b className="aurora" /><b className="specks" /><b className="cursor-light" /></div>
       <header className="nav">
         <div className="container nav-inner">
-          <Link to="/" className="brand" aria-label="FestPass home"><Wordmark variant={prefs.logo} /></Link>
+          <Link to="/" className="brand" aria-label="FestPass home"><Wordmark /></Link>
           <nav className="nav-links" aria-label="Main">{linkEls}</nav>
           <div className="nav-right" style={{ marginLeft: 'auto' }}>
             <Customizer />

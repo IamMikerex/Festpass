@@ -44,7 +44,7 @@ If the Docker app is running it already uses port 8000: stop it (`docker compose
 | http://127.0.0.1:8000/docs | Swagger UI, every endpoint can be tried here |
 | http://127.0.0.1:8000/redoc | ReDoc |
 | http://127.0.0.1:8000/api/catalog/festivals | Festivals read through **SQLModel** from MySQL (`app/models.py`, `app/routers/catalog.py`) |
-| http://127.0.0.1:8000/api/demo/artists | **SQLModel + SQLite** CRUD example (`app/routers/lineup.py`); the file `api/festpass_demo.db` opens in VS Code's SQLite Viewer |
+| http://127.0.0.1:8000/api/demo/artists | **SQLModel + SQLite** CRUD example (`app/routers/lineup.py`); the file `api/data/festpass_demo.db` opens in VS Code's SQLite Viewer |
 | http://127.0.0.1:8000/ | The website (needs `npm run build` once so `client/dist` exists) |
 
 The main FestPass data stays in MySQL because its 12 triggers and 6 views are MySQL-specific. VS Code suggests the needed extensions from `.vscode/extensions.json`.
@@ -56,16 +56,17 @@ The main FestPass data stays in MySQL because its 12 triggers and 6 views are My
 Needs only [Docker Desktop](https://www.docker.com/products/docker-desktop/), running. No Python, Node or MySQL install.
 
 1. In the project folder: `docker compose up -d --build` (first time takes a few minutes)
-2. Load the demo data (first time only, or to reset): `docker compose exec app python -m scripts.init_db`
+2. Nothing to load: on first start the app builds the demo database itself (`init_db --if-empty`). To wipe it and reload the demo data later: `docker compose exec app python -m scripts.init_db --reset`
 3. Open http://localhost:8000 and sign in with a [demo account](#5-demo-accounts).
 
 | To… | Run |
 |---|---|
-| Stop | `docker compose down` (data is kept) |
+| Stop | `docker compose down` (data is kept; `down -v` would delete it) |
 | Start again | `docker compose up -d` |
 | Apply code changes | `docker compose up -d --build` |
 | See errors | `docker logs festpass-app` |
-| Open a MySQL prompt | `docker exec -it festpass-mysql mysql -u root -proot festpass` |
+| Open a MySQL prompt | `docker exec -it festpass-mysql mysql -u root -p festpass` (local default password `root`) |
+| Back up the database | `npm run db:backup` (writes `api/data/backups/festpass-<date>.sql`) |
 
 Optional: copy `api/.env.example` to `api/.env` to set your own `JWT_SECRET`; Docker picks it up.
 
@@ -125,7 +126,7 @@ source api/.venv/bin/activate            # Windows: api\.venv\Scripts\activate
 npm run install:all                      # client npm deps + api pip deps
 
 cp api/.env.example api/.env             # set DB_* and a long random JWT_SECRET
-npm run db:init                          # drops + recreates `festpass` from database/festpass.sql
+npm run db:init                          # builds `festpass` from database/festpass.sql (refuses if it already has data)
 ```
 
 `database/festpass.sql` is self-contained: tables, triggers, views and demo data. You can import it directly instead:
@@ -157,17 +158,18 @@ Every seeded account uses the password **`Password123!`** (the sign‑in page ha
 | Gate staff | `gate@festpass.com` | Scanner on *Bosphorus Beats* (live now) |
 | Finance auditor | `auditor@festpass.com` | Read‑only ledger, reconciliation, audit trail |
 
-Seed dates are relative to the day you run `db:init`, so there is always a live festival (gate demo), one 5 days out (no refund band), one 15 days out (50% band), one 45 days out (90% band), a draft and a completed one. Re‑run `npm run db:init` to reset.
+Seed dates are relative to the day you run `db:init`, so there is always a live festival (gate demo), one 5 days out (no refund band), one 15 days out (50% band), one 45 days out (90% band), a draft and a completed one. To reset to fresh demo data: `npm run db:backup`, then `npm run db:reset` (drops and rebuilds; refused when `APP_ENV=production`).
 
 To scan without a camera: as an attendee open **Show QR**, or copy a ticket's `qr_token` from the database, and paste it into the scanner's manual field.
 
 ### 6. Tests
 
 ```bash
-npm test     # 24 pytest tests: every business rule + analytics (re-seeds the DB!)
+npm test     # 25 pytest tests: every business rule + analytics
 ```
 
-The suite starts the real API on a free port and runs against real MySQL, covering every rule below, including concurrency (8 parallel buyers for the last ticket; the same QR at two gates at once).
+The suite builds its own throwaway database `festpass_test` (never your `festpass` data), starts the real API on a free port and runs against real MySQL, covering every rule below, including concurrency (8 parallel buyers for the last ticket; the same QR at two gates at once).
+A MySQL volume created before this change needs the grant once: `docker exec festpass-mysql mysql -uroot -p -e "GRANT ALL ON festpass_test.* TO 'festpass'@'%'"`.
 
 ---
 
@@ -236,6 +238,18 @@ The gateway is simulated (`api/app/services/gateway.py`): every method captures 
 - Organizers only see and change their own festivals; the auditor role is read‑only.
 - QR tokens are 256‑bit random values and are only returned to the current holder of a paid ticket; ticket IDs are UUIDs.
 - Login and registration are rate‑limited; security headers are set on every response; the webhook secret is compared in constant time.
+
+## Data protection
+| Data | Where | Protection |
+|---|---|---|
+| FestPass MySQL (`festpass`) | Docker volume `festpass_festpass-mysql` (or your own MySQL server) | Credentials only in `api/.env` / environment (git-ignored); port bound to `127.0.0.1`; survives restarts, rebuilds and `docker compose down` |
+| Test database (`festpass_test`) | Same MySQL server | Only pytest drops/rebuilds it; `init_db` refuses any statement aimed at another database |
+| SQLite demo (`festpass_demo.db`) | `api/data/` (Docker: volume `festpass_festpass-data`) | Git- and Docker-ignored; outside `client/dist`, the only folder FastAPI serves as files |
+| Backups | `api/data/backups/` | Git- and Docker-ignored; `npm run db:backup` (tables, data, triggers, views, routines) |
+
+- `npm run db:init` never overwrites existing data. `npm run db:reset` is the only command that drops `festpass`, and it is refused when `APP_ENV=production`. Deploys run `init_db --if-empty`.
+- Restore a backup (replaces the database's contents): `docker exec -i festpass-mysql mysql -ufestpass -p festpass < api/data/backups/<file>.sql`
+- Docker passwords can be overridden from the environment or a root `.env` (`MYSQL_ROOT_PASSWORD`, `DB_PASSWORD`).
 
 ## Project layout
 

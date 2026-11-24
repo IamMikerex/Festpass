@@ -1,23 +1,26 @@
 # Whole app in Docker: `docker compose up -d --build`, then once `docker compose exec app python -m scripts.init_db`.
 # Open http://localhost:8000. MySQL alone (for `npm run dev:*`): `docker compose up -d mysql`.
+# Data lives in the named volumes below and survives restarts, rebuilds and `docker compose down`.
+# Only `docker compose down -v` (or `docker volume rm`) deletes it: back up first with `npm run db:backup`.
+# Passwords come from the environment (or a root .env file, git-ignored); the defaults are for local use only.
 services:
   mysql:
     image: mysql:8.0
     container_name: festpass-mysql
     environment:
-      MYSQL_ROOT_PASSWORD: root
+      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD:-root}
       MYSQL_USER: festpass
-      MYSQL_PASSWORD: festpass
+      MYSQL_PASSWORD: ${DB_PASSWORD:-festpass}
       MYSQL_DATABASE: festpass
       TZ: Europe/Istanbul
     command: ["--default-time-zone=+03:00", "--log-bin-trust-function-creators=1"]
     ports:
-      - "3306:3306"
+      - "127.0.0.1:3306:3306"  # reachable from this machine only
     volumes:
       - festpass-mysql:/var/lib/mysql
       - ./database/grant.sql:/docker-entrypoint-initdb.d/00-grant.sql:ro
     healthcheck:
-      test: ["CMD", "mysqladmin", "ping", "-h", "127.0.0.1", "-proot"]
+      test: ["CMD-SHELL", "mysqladmin ping -h 127.0.0.1 -p$$MYSQL_ROOT_PASSWORD"]
       interval: 5s
       retries: 30
 
@@ -31,10 +34,13 @@ services:
       DB_HOST: mysql
       DB_PORT: "3306"
     ports:
-      - "8000:8000"
+      - "127.0.0.1:8000:8000"
+    volumes:
+      - festpass-data:/app/api/data  # SQLite demo DB and backups
     depends_on:
       mysql:
         condition: service_healthy
     restart: unless-stopped
 volumes:
   festpass-mysql:
+  festpass-data:

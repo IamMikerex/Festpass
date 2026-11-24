@@ -48,5 +48,9 @@ CLAUDE.local.md
 AGENTS.md
 HANDOVER.md
 
-# Local SQLite demo database (created on startup)
+# Databases, dumps and backups never go to Git
 *.db
+*.sqlite
+*.sqlite3
+api/data/
+api/tests/.data/

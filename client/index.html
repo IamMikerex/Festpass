@@ -10,13 +10,18 @@
     <script>
       // Mirrors load()/effective() in src/lib/prefs.jsx so the saved look applies before first paint.
       try {
+        var d = { theme: 'sunset', bg: 'beams', motion: 'calm', glow: true, tilt: true, reduce: 'system', contrast: false, text: 'md', focus: false, simple: false };
+        var c = { theme: ['sunset', 'purple', 'pink', 'blue', 'rainbow'], bg: ['beams', 'aurora', 'minimal'], motion: ['off', 'calm', 'lively'], reduce: ['system', 'on', 'off'], text: ['sm', 'md', 'lg', 'xl'] };
         var s = JSON.parse(localStorage.getItem('festpass.prefs')) || {};
-        if (!s.v && s.theme === 'purple' && s.logo === 'ticket' && s.bg === 'beams' && s.motion === 'calm' && s.glow !== false && s.tilt !== false) s = {};
-        var p = Object.assign({ theme: 'sunset', bg: 'beams', motion: 'calm', glow: true, tilt: true, reduce: false, contrast: false, text: 'md', focus: false, simple: false }, s);
-        var still = p.reduce || matchMedia('(prefers-reduced-motion: reduce)').matches;
+        if (!s.v && s.theme === 'purple' && s.bg === 'beams' && s.motion === 'calm') delete s.theme;
+        if (typeof s.reduce === 'boolean') s.reduce = s.reduce ? 'on' : 'system';
+        var p = {};
+        for (var k in d) p[k] = (c[k] ? c[k].indexOf(s[k]) > -1 : typeof s[k] === typeof d[k]) ? s[k] : d[k];
+        var still = p.reduce === 'on' || (p.reduce === 'system' && matchMedia('(prefers-reduced-motion: reduce)').matches);
+        var fx = !p.simple && !still;
         Object.assign(document.documentElement.dataset, {
-          theme: p.theme, bg: p.bg, text: p.text, motion: still ? 'off' : p.motion,
-          glow: p.glow && !p.simple && !still ? 'on' : 'off', tilt: p.tilt && !p.simple && !still ? 'on' : 'off',
+          theme: p.theme, bg: p.simple ? 'minimal' : p.bg, text: p.text, motion: still ? 'off' : p.motion,
+          glow: p.glow && fx ? 'on' : 'off', tilt: p.tilt && fx ? 'on' : 'off',
           reduce: still ? 'on' : 'off', fx: p.simple ? 'off' : 'on', contrast: p.contrast ? 'high' : 'normal', focus: p.focus ? 'strong' : 'normal'
         });
       } catch (e) { document.documentElement.dataset.theme = 'sunset'; }

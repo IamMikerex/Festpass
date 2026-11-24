@@ -3,7 +3,7 @@ SQLModel layer.
 
 1) `Festival` / `TicketTier` map the existing MySQL tables (created by database/festpass.sql, never by
    SQLModel, so the triggers, CHECKs and views stay in charge). Used by routers/catalog.py.
-2) `Artist` lives in a separate SQLite file (api/festpass_demo.db), created on startup. Used by
+2) `Artist` lives in a separate SQLite file (api/data/festpass_demo.db), created on startup. Used by
    routers/lineup.py as a plain SQLModel CRUD example you can open with VS Code's SQLite Viewer.
 """
 from datetime import date, datetime
@@ -12,7 +12,7 @@ from urllib.parse import quote_plus
 
 from sqlmodel import Field, Relationship, Session, SQLModel, create_engine
 
-from .config import ROOT, settings
+from .config import settings
 from .db import _TZ
 
 # ---------------------------------------------------------------- MySQL (existing FestPass tables)
@@ -83,7 +83,8 @@ def mysql_session():
 
 
 # ---------------------------------------------------------------- SQLite (SQLModel CRUD example)
-SQLITE_FILE = ROOT / "festpass_demo.db"
+settings.data_dir.mkdir(parents=True, exist_ok=True)
+SQLITE_FILE = settings.data_dir / "festpass_demo.db"
 sqlite_engine = create_engine(f"sqlite:///{SQLITE_FILE}", connect_args={"check_same_thread": False})
 
 

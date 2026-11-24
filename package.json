@@ -5,6 +5,8 @@
   "scripts": {
     "install:all": "npm --prefix client install && python -m pip install -r api/requirements.txt",
     "db:init": "cd api && python -m scripts.init_db",
+    "db:reset": "cd api && python -m scripts.init_db --reset",
+    "db:backup": "cd api && python -m scripts.backup_db",
     "dev:api": "cd api && python -m uvicorn app.main:app --reload --port 8000",
     "dev:client": "npm --prefix client run dev",
     "build": "npm --prefix client run build",
