@@ -60,7 +60,7 @@ export default function FestivalDetail() {
   return (
     <>
       <div className="detail-hero">
-        <FestivalArt id={f.festival_id} name={f.name} />
+        <FestivalArt id={f.festival_id} name={f.name} eager />
         <div className="overlay" />
         <div className="content">
           <div className="row"><Badge value={f.status}>{f.status === 'LIVE' ? 'Live now' : undefined}</Badge><span className="chip">{f.min_age}+ only</span></div>

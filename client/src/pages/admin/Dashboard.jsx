@@ -22,7 +22,7 @@ export default function Dashboard() {
       </div>
 
       {user.role === 'ORGANIZER' && (t.pending_applications > 0 || t.pending_vendors > 0) && (
-        <div className="card card-pad mb-2 row-between" style={{ borderColor: '#fcd9a8', background: 'var(--warning-50)' }}>
+        <div className="card card-pad mb-2 row-between" style={{ borderColor: 'rgba(251,191,36,.35)', background: 'var(--warning-50)' }}>
           <div className="row"><AlertCircle size={18} color="var(--warning)" /><span><b>Needs your review:</b> {t.pending_applications} stall application(s) and {t.pending_vendors} new vendor(s).</span></div>
           <Link to="/admin/vendors" className="btn btn-outline btn-sm">Review <ArrowRight size={14} /></Link>
         </div>

@@ -29,7 +29,7 @@ export default function ManageFestivals() {
       ) : (
         <div className="grid grid-auto">
           {data.festivals.map((f) => (
-            <Link key={f.festival_id} to={`/admin/festivals/${f.festival_id}`} className="card fest-card">
+            <Link key={f.festival_id} to={`/admin/festivals/${f.festival_id}`} className="card admin-fest">
               <div className="fest-art" style={{ height: 110 }}>
                 <FestivalArt id={f.festival_id} name={f.name} />
                 <div className="badges"><Badge value={f.status} /></div>

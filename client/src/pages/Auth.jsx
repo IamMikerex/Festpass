@@ -16,8 +16,8 @@ const DEMO = [
 function AuthArt({ title, text }) {
   return (
     <div className="auth-art">
-      <span className="chip"><Ticket size={13} /> FestPass</span>
-      <h2 className="mt-2">{title}</h2>
+      <img className="hero-photo" src="/img/lasers.webp" alt="" />
+      <h2>{title}</h2>
       <p>{text}</p>
     </div>
   );

@@ -9,7 +9,7 @@ export default function StallMap({ stalls, selected, onPick, mineIds = [], showV
     <div>
       <div className="legend mb-2">
         <span><i />Available</span>
-        <span><i style={{ background: 'repeating-linear-gradient(-45deg,#f6f5fb,#f6f5fb 3px,#e5e2f0 3px,#e5e2f0 6px)' }} />Allocated</span>
+        <span><i style={{ background: 'repeating-linear-gradient(-45deg,rgba(255,255,255,.03),rgba(255,255,255,.03) 3px,rgba(255,255,255,.14) 3px,rgba(255,255,255,.14) 6px)' }} />Allocated</span>
         <span><i style={{ borderColor: 'var(--success)', background: 'var(--success-50)' }} />Yours</span>
         <span><Zap size={12} style={{ verticalAlign: -2 }} /> Power supply</span>
       </div>

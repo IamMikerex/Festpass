@@ -1,9 +1,9 @@
 import { ResponsiveContainer, AreaChart, Area, XAxis, YAxis, Tooltip, CartesianGrid, BarChart, Bar, PieChart, Pie, Cell, Legend } from 'recharts';
 import { date, moneyCompact, money } from '../lib/format';
 
-export const COLORS = ['#6d28d9', '#ec4899', '#0ea5e9', '#f59e0b', '#10b981', '#64748b'];
-const axis = { fontSize: 12, fill: '#9a96b0' };
-const tip = { contentStyle: { borderRadius: 10, border: '1px solid #e6e3f0', fontSize: 13 } };
+export const COLORS = ['#a78bfa', '#f0469c', '#38bdf8', '#fb923c', '#34d399', '#8a82ab'];
+const axis = { fontSize: 12, fill: '#8a82ab' };
+const tip = { contentStyle: { borderRadius: 12, border: '1px solid rgba(196,181,253,.26)', background: 'rgba(22,16,40,.95)', color: '#f4f1ff', fontSize: 13 }, labelStyle: { color: '#f4f1ff' }, cursor: { fill: 'rgba(139,92,246,.08)' } };
 
 export function RevenueChart({ data }) {
   const rows = data.map((d) => ({ ...d, label: date(d.day, { day: 'numeric', month: 'short' }) }));
@@ -11,15 +11,15 @@ export function RevenueChart({ data }) {
     <ResponsiveContainer>
       <AreaChart data={rows} margin={{ left: 0, right: 8, top: 8 }}>
         <defs>
-          <linearGradient id="rev" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stopColor="#6d28d9" stopOpacity={0.35} /><stop offset="1" stopColor="#6d28d9" stopOpacity={0} /></linearGradient>
-          <linearGradient id="ref" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stopColor="#ec4899" stopOpacity={0.3} /><stop offset="1" stopColor="#ec4899" stopOpacity={0} /></linearGradient>
+          <linearGradient id="rev" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stopColor="#a78bfa" stopOpacity={0.35} /><stop offset="1" stopColor="#a78bfa" stopOpacity={0} /></linearGradient>
+          <linearGradient id="ref" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stopColor="#f0469c" stopOpacity={0.3} /><stop offset="1" stopColor="#f0469c" stopOpacity={0} /></linearGradient>
         </defs>
-        <CartesianGrid stroke="#eeecf6" vertical={false} />
+        <CartesianGrid stroke="rgba(255,255,255,.06)" vertical={false} />
         <XAxis dataKey="label" tick={axis} tickLine={false} axisLine={false} minTickGap={20} />
         <YAxis tick={axis} tickLine={false} axisLine={false} tickFormatter={moneyCompact} width={70} />
         <Tooltip {...tip} formatter={(v, n) => [money(v), n]} />
-        <Area type="monotone" dataKey="revenue" name="Revenue" stroke="#6d28d9" strokeWidth={2} fill="url(#rev)" />
-        <Area type="monotone" dataKey="refunds" name="Refunds" stroke="#ec4899" strokeWidth={2} fill="url(#ref)" />
+        <Area type="monotone" dataKey="revenue" name="Revenue" stroke="#a78bfa" strokeWidth={2} fill="url(#rev)" />
+        <Area type="monotone" dataKey="refunds" name="Refunds" stroke="#f0469c" strokeWidth={2} fill="url(#ref)" />
       </AreaChart>
     </ResponsiveContainer>
   );
@@ -30,11 +30,11 @@ export function TicketsBarChart({ data, x = 'day', y = 'tickets', name = 'Ticket
   return (
     <ResponsiveContainer>
       <BarChart data={rows} margin={{ left: 0, right: 8, top: 8 }}>
-        <CartesianGrid stroke="#eeecf6" vertical={false} />
+        <CartesianGrid stroke="rgba(255,255,255,.06)" vertical={false} />
         <XAxis dataKey="label" tick={axis} tickLine={false} axisLine={false} minTickGap={16} />
         <YAxis tick={axis} tickLine={false} axisLine={false} width={40} allowDecimals={false} />
         <Tooltip {...tip} />
-        <Bar dataKey={y} name={name} fill="#6d28d9" radius={[6, 6, 0, 0]} />
+        <Bar dataKey={y} name={name} fill="#a78bfa" radius={[6, 6, 0, 0]} />
       </BarChart>
     </ResponsiveContainer>
   );
@@ -45,13 +45,13 @@ export function FlowChart({ data }) {
   return (
     <ResponsiveContainer>
       <BarChart data={rows} margin={{ left: 0, right: 8, top: 8 }}>
-        <CartesianGrid stroke="#eeecf6" vertical={false} />
+        <CartesianGrid stroke="rgba(255,255,255,.06)" vertical={false} />
         <XAxis dataKey="label" tick={axis} tickLine={false} axisLine={false} minTickGap={16} />
         <YAxis tick={axis} tickLine={false} axisLine={false} width={40} allowDecimals={false} />
         <Tooltip {...tip} />
         <Legend wrapperStyle={{ fontSize: 12 }} />
-        <Bar dataKey="entries" name="Entries" stackId="a" fill="#10b981" />
-        <Bar dataKey="exits" name="Exits" stackId="a" fill="#0ea5e9" />
+        <Bar dataKey="entries" name="Entries" stackId="a" fill="#34d399" />
+        <Bar dataKey="exits" name="Exits" stackId="a" fill="#38bdf8" />
         <Bar dataKey="rejected" name="Rejected" stackId="a" fill="#ef4444" radius={[6, 6, 0, 0]} />
       </BarChart>
     </ResponsiveContainer>

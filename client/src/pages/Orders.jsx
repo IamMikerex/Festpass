@@ -24,7 +24,7 @@ function OrderRow({ o }) {
         </td>
       </tr>
       {open && (
-        <tr><td colSpan={7} style={{ background: '#fbfaff' }}>
+        <tr><td colSpan={7} style={{ background: 'rgba(255,255,255,.02)' }}>
           {!data ? <span className="muted small">Loading…</span> : (
             <div className="grid grid-2">
               <div>

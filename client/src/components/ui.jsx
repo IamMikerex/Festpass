@@ -130,9 +130,11 @@ export function ToastProvider({ children }) {
       {children}
       <div className="toasts" aria-live="polite">
         {toasts.map((t) => (
-          <div key={t.id} className={`toast ${t.kind}`}>
-            {t.kind === 'error' ? <AlertCircle size={18} /> : <CheckCircle2 size={18} />}
+          <div key={t.id} className={`toast ${t.kind}`} role={t.kind === 'error' ? 'alert' : 'status'}>
+            {{ error: <AlertCircle size={18} />, success: <CheckCircle2 size={18} />, info: <Info size={18} /> }[t.kind]}
             <span>{t.text}</span>
+            <button className="toast-x" onClick={() => setToasts((all) => all.filter((x) => x.id !== t.id))} aria-label="Dismiss"><X size={15} /></button>
+            <i className="toast-timer" />
           </div>
         ))}
       </div>

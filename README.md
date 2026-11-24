@@ -24,6 +24,8 @@ Hosted on [Railway](https://railway.com): one service built from this repo's `Do
 
 Railway variables for the web service (see [`api/.env.example`](api/.env.example)): `APP_ENV=production`, `DB_HOST/DB_PORT/DB_USER/DB_PASSWORD` referencing the MySQL service (`${{MySQL.MYSQLHOST}}` etc.), `DB_NAME=festpass`, `DB_TIMEZONE=+03:00`, `JWT_SECRET`, `PAYMENT_WEBHOOK_SECRET`, `PORT=8000`. CORS needs no setup because the site and API share one origin.
 
+Concert photos in `client/public/img` are from [Unsplash](https://unsplash.com/license) (free to use). Each festival's genre, photo and accent colour are picked from its name in `client/src/lib/vibe.js`, because the schema stores no genre.
+
 ## Quick start
 
 ### Easiest: everything in Docker (any OS)

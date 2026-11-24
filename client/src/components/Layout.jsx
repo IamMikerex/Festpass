@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { Link, NavLink, Outlet, useLocation, useNavigate } from 'react-router-dom';
 import {
   Ticket, Compass, LayoutDashboard, CalendarDays, Store, ScanLine, Receipt, Users, ShieldCheck,
-  LogOut, Menu, ClipboardList, Wallet, UserCircle, MapPinned, FileSearch,
+  LogOut, Menu, X, ClipboardList, Wallet, UserCircle, MapPinned, FileSearch,
 } from 'lucide-react';
 import { useAuth } from '../lib/auth';
 import { label } from '../lib/format';
@@ -58,6 +58,7 @@ export default function Layout() {
 
   return (
     <div className="app">
+      <div className="stage-bg" aria-hidden="true"><i /><i /><i /><i /></div>
       <header className="nav">
         <div className="container nav-inner">
           <Link to="/" className="brand"><span className="brand-mark"><Ticket size={18} /></span>FestPass</Link>
@@ -77,7 +78,7 @@ export default function Layout() {
                 <Link to="/register" className="btn btn-primary">Create account</Link>
               </>
             )}
-            <button className="btn btn-outline btn-icon menu-btn" onClick={() => setOpen((o) => !o)} aria-label="Menu"><Menu size={18} /></button>
+            <button className="btn btn-outline btn-icon menu-btn" onClick={() => setOpen((o) => !o)} aria-label={open ? 'Close menu' : 'Open menu'} aria-expanded={open}>{open ? <X size={18} /> : <Menu size={18} />}</button>
           </div>
         </div>
         {open && (
@@ -87,7 +88,7 @@ export default function Layout() {
           </div>
         )}
       </header>
-      <main className="main"><div className="container"><Outlet /></div></main>
+      <main className="main"><div className="container page" key={loc.pathname}><Outlet /></div></main>
       <footer className="footer">
         <div className="container row-between">
           <span>© {new Date().getFullYear()} FestPass · Named digital tickets, gate control and vendor management</span>
