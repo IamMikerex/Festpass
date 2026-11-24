@@ -1,16 +1,43 @@
 import { createContext, useContext, useEffect, useState } from 'react';
 
-// Look-and-feel preferences, saved in this browser. index.html applies them before first paint.
+// Look-and-feel + accessibility preferences, saved in this browser.
+// index.html runs the same load + apply before first paint (keep DEFAULTS in sync there).
 const KEY = 'festpass.prefs';
-export const DEFAULTS = { theme: 'purple', logo: 'ticket', bg: 'beams', motion: 'calm', glow: true, tilt: true };
-export const load = () => { try { return { ...DEFAULTS, ...JSON.parse(localStorage.getItem(KEY)) }; } catch { return DEFAULTS; } };
+export const DEFAULTS = {
+  v: 2, theme: 'sunset', logo: 'ticket', bg: 'beams', motion: 'calm', glow: true, tilt: true,
+  reduce: false, contrast: false, text: 'md', focus: false, simple: false,
+};
+// Before v2 the full default set was saved on every visit, so an unversioned copy of the old defaults is not a real choice.
+const untouchedV1 = (p) => !p.v && p.theme === 'purple' && p.logo === 'ticket' && p.bg === 'beams' && p.motion === 'calm' && p.glow !== false && p.tilt !== false;
 
-function apply(p) {
-  const d = document.documentElement.dataset;
-  Object.assign(d, { theme: p.theme, bg: p.bg, motion: p.motion, glow: p.glow ? 'on' : 'off', tilt: p.tilt ? 'on' : 'off' });
+export function load() {
+  try {
+    const saved = JSON.parse(localStorage.getItem(KEY)) || {};
+    return { ...DEFAULTS, ...(untouchedV1(saved) ? {} : saved), v: 2 };
+  } catch { return DEFAULTS; }
 }
 
+const osReduce = () => matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+/** What the page actually uses: accessibility choices (and the OS) override the visual ones. */
+export function effective(p, os = osReduce()) {
+  const still = p.reduce || os;
+  return {
+    theme: p.theme, bg: p.bg, text: p.text,
+    motion: still ? 'off' : p.motion,
+    glow: p.glow && !p.simple && !still ? 'on' : 'off',
+    tilt: p.tilt && !p.simple && !still ? 'on' : 'off',
+    reduce: still ? 'on' : 'off',
+    fx: p.simple ? 'off' : 'on',
+    contrast: p.contrast ? 'high' : 'normal',
+    focus: p.focus ? 'strong' : 'normal',
+  };
+}
+
+const apply = (p) => Object.assign(document.documentElement.dataset, effective(p));
+
 // Cursor light + card tilt: one delegated, rAF-throttled listener writes CSS variables on the hovered surface.
+// CSS only uses them when html[data-glow|data-tilt] is "on".
 const SURFACES = '.card, .fest-card, .stat, .ticket, .filters';
 function trackPointer() {
   if (!matchMedia('(hover: hover) and (pointer: fine)').matches) return () => {};
@@ -21,7 +48,7 @@ function trackPointer() {
     frame = requestAnimationFrame(() => {
       frame = 0;
       const el = e.target.closest?.(SURFACES);
-      if (last && last !== el) last.style.removeProperty('--rx'), last.style.removeProperty('--ry');
+      if (last && last !== el) { last.style.removeProperty('--rx'); last.style.removeProperty('--ry'); }
       last = el;
       if (!el) return;
       const r = el.getBoundingClientRect();
@@ -42,13 +69,19 @@ function trackPointer() {
 const PrefsContext = createContext(null);
 export function PrefsProvider({ children }) {
   const [prefs, setPrefs] = useState(load);
+  const [os, setOs] = useState(osReduce);
   useEffect(() => {
-    apply(prefs);
-    try { localStorage.setItem(KEY, JSON.stringify(prefs)); } catch { /* private mode */ }
-  }, [prefs]);
+    const mq = matchMedia('(prefers-reduced-motion: reduce)');
+    const onChange = () => setOs(mq.matches);
+    mq.addEventListener('change', onChange);
+    return () => mq.removeEventListener('change', onChange);
+  }, []);
+  useEffect(() => { apply(prefs); }, [prefs, os]);
   useEffect(trackPointer, []);
-  const set = (patch) => setPrefs((p) => ({ ...p, ...patch }));
-  const reset = () => setPrefs(DEFAULTS);
-  return <PrefsContext.Provider value={{ prefs, set, reset }}>{children}</PrefsContext.Provider>;
+  const save = (next) => { try { localStorage.setItem(KEY, JSON.stringify(next)); } catch { /* private mode */ } return next; };
+  // Only explicit changes are saved, so first-time visitors keep following DEFAULTS.
+  const set = (patch) => setPrefs((p) => save({ ...p, ...patch }));
+  const reset = () => setPrefs(save(DEFAULTS));
+  return <PrefsContext.Provider value={{ prefs, set, reset, os }}>{children}</PrefsContext.Provider>;
 }
 export const usePrefs = () => useContext(PrefsContext);

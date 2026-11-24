@@ -130,7 +130,7 @@ function TicketCard({ t, me, onAction }) {
       <div className="ticket-main">
         <div className="row-between">
           <div className="row"><Badge value={t.status} />{t.festival_status !== 'ON_SALE' && <Badge value={t.festival_status} />}{inside && <Badge tone="blue">Inside now</Badge>}</div>
-          <span className="tier-price" style={{ fontSize: 16 }}>{t.tier_name}</span>
+          <span className="tier-price" style={{ fontSize: '1rem' }}>{t.tier_name}</span>
         </div>
         <h3><Link to={`/festivals/${t.festival_id}`} style={{ color: 'inherit' }}>{t.festival_name}</Link></h3>
         <div className="ticket-meta">
@@ -153,8 +153,9 @@ function TicketCard({ t, me, onAction }) {
         )}
       </div>
       <div className="ticket-side">
-        <div className={`qr-mini ${active ? '' : 'blur'}`} onClick={() => active && onAction('qr', t)} role="button" aria-label="Show QR">
-          <QrCode size={56} color="#17142b" />
+        <div className={`qr-mini ${active ? '' : 'blur'}`} onClick={() => active && onAction('qr', t)} role="button" aria-label="Show QR code" aria-disabled={!active}
+          tabIndex={active ? 0 : -1} onKeyDown={(e) => active && (e.key === 'Enter' || e.key === ' ') && (e.preventDefault(), onAction('qr', t))}>
+          <QrCode size={56} color="#17142b" aria-hidden="true" />
         </div>
         <span className="tiny faint mono">{t.ticket_id.slice(0, 8).toUpperCase()}</span>
       </div>

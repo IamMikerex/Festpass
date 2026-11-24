@@ -62,11 +62,12 @@ export default function Layout() {
 
   return (
     <div className="app">
+      <a href="#main" className="skip-link">Skip to content</a>
       <div className="stage-bg" aria-hidden="true"><i /><i /><i /><i /><b className="aurora" /><b className="specks" /></div>
       <header className="nav">
         <div className="container nav-inner">
           <Link to="/" className="brand" aria-label="FestPass home"><Wordmark variant={prefs.logo} /></Link>
-          <nav className="nav-links">{linkEls}</nav>
+          <nav className="nav-links" aria-label="Main">{linkEls}</nav>
           <div className="nav-right" style={{ marginLeft: 'auto' }}>
             <Customizer />
             {user ? (
@@ -88,13 +89,13 @@ export default function Layout() {
         </div>
         <span className="route-line" key={loc.pathname} aria-hidden="true" />
         {open && (
-          <div className="mobile-menu">
+          <nav className="mobile-menu" aria-label="Main">
             {linkEls}
             {user && <NavLink to="/profile" className="nav-link" onClick={() => setOpen(false)}><UserCircle size={16} />Profile</NavLink>}
-          </div>
+          </nav>
         )}
       </header>
-      <main className="main"><div className="container page" key={loc.pathname}><Outlet /></div></main>
+      <main className="main" id="main" tabIndex={-1}><div className="container page" key={loc.pathname}><Outlet /></div></main>
       <footer className="footer">
         <div className="container row-between">
           <span>© {new Date().getFullYear()} FestPass · Named digital tickets, gate control and vendor management</span>

@@ -7,7 +7,20 @@
     <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Unbounded:wght@500;600;700&display=swap" rel="stylesheet" />
-    <script>try{var p=JSON.parse(localStorage.getItem("festpass.prefs"))||{},d=document.documentElement.dataset;d.theme=p.theme||"purple";d.bg=p.bg||"beams";d.motion=p.motion||"calm";d.glow=p.glow===false?"off":"on";d.tilt=p.tilt===false?"off":"on"}catch(e){}</script>
+    <script>
+      // Mirrors load()/effective() in src/lib/prefs.jsx so the saved look applies before first paint.
+      try {
+        var s = JSON.parse(localStorage.getItem('festpass.prefs')) || {};
+        if (!s.v && s.theme === 'purple' && s.logo === 'ticket' && s.bg === 'beams' && s.motion === 'calm' && s.glow !== false && s.tilt !== false) s = {};
+        var p = Object.assign({ theme: 'sunset', bg: 'beams', motion: 'calm', glow: true, tilt: true, reduce: false, contrast: false, text: 'md', focus: false, simple: false }, s);
+        var still = p.reduce || matchMedia('(prefers-reduced-motion: reduce)').matches;
+        Object.assign(document.documentElement.dataset, {
+          theme: p.theme, bg: p.bg, text: p.text, motion: still ? 'off' : p.motion,
+          glow: p.glow && !p.simple && !still ? 'on' : 'off', tilt: p.tilt && !p.simple && !still ? 'on' : 'off',
+          reduce: still ? 'on' : 'off', fx: p.simple ? 'off' : 'on', contrast: p.contrast ? 'high' : 'normal', focus: p.focus ? 'strong' : 'normal'
+        });
+      } catch (e) { document.documentElement.dataset.theme = 'sunset'; }
+    </script>
     <title>FestPass · Festival tickets & vendors</title>
   </head>
   <body>
