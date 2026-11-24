@@ -16,6 +16,14 @@ One FastAPI app serves the core API (`/api`), the read‑only analytics (`/analy
 
 ---
 
+## Live demo
+
+**https://festpass-web-production.up.railway.app**: open it in any browser, nothing to install. Sign in with a [demo account](#5-demo-accounts), for example `can@festpass.com` (fan), `organizer@festpass.com` (organizer) or `gate@festpass.com` (gate staff). The password for every account is `Password123!`.
+
+Hosted on [Railway](https://railway.com): one service built from this repo's `Dockerfile` (React + FastAPI), plus a MySQL 8 service with a persistent volume. Every push to `main` redeploys automatically. On first start the container loads `database/festpass.sql`; later starts keep the existing data (`python -m scripts.init_db --if-empty`).
+
+Railway variables for the web service (see [`api/.env.example`](api/.env.example)): `APP_ENV=production`, `DB_HOST/DB_PORT/DB_USER/DB_PASSWORD` referencing the MySQL service (`${{MySQL.MYSQLHOST}}` etc.), `DB_NAME=festpass`, `DB_TIMEZONE=+03:00`, `JWT_SECRET`, `PAYMENT_WEBHOOK_SECRET`, `PORT=8000`. CORS needs no setup because the site and API share one origin.
+
 ## Quick start
 
 ### Easiest: everything in Docker (any OS)
